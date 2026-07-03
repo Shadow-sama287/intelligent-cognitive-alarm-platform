@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: alarm_postgres
+    environment:
+      POSTGRES_USER: cognitive_user
+      POSTGRES_PASSWORD: cognitive_password
+      POSTGRES_DB: cognitive_alarm_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cognitive_user -d cognitive_alarm_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7.0
+    container_name: alarm_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: cognitive_challenges
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: alarm_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  mongo_data:
