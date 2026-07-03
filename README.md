@@ -85,3 +85,34 @@ When your task is complete, go to GitHub and open a Pull Request to merge your b
 
 - **Rule:** Your PR must be reviewed and approved by at least one other team member before it can be merged.
 - Once merged, delete your feature branch and pull the fresh `main` to start your next task.
+
+### Once your Pull Request is merged and you click "Delete branch" on GitHub, your remote repository is clean. However, your _local_ computer doesn't know that yet. It still has the old branch and an outdated `main` branch.
+
+Before you start your next task, you need to sync your local machine with the new reality. Here is the exact cleanup loop:
+
+1. **Switch back to main:** Leave the completed branch.
+
+```bash
+git checkout main
+```
+
+2. **Pull the latest updates:** Get the freshly merged code.
+   This pulls down the `main` branch from GitHub, which now includes the code you just merged.
+
+```bash
+git pull origin main
+```
+
+3. **Delete your local branch:** Keep your local workspace clean.
+   Since the code is safely in `main`, you no longer need the local copy of your feature branch. The `-d` flag safely deletes it.
+
+```bash
+git branch -d karan/feat/your-finished-feature
+```
+
+4. **Prune dead remote branches (Optional but recommended):** Sync your local branch list with GitHub.
+   This tells your local Git to forget about any remote branches that were deleted on GitHub.
+
+```bash
+git fetch -p
+```
