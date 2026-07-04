@@ -1,25 +1,36 @@
-import React from 'react';
-import { Bell, User, AlarmClock } from 'lucide-react';
+import { Link, useNavigate } from "react-router-dom";
+import { FaBrain, FaHome, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { authService } from "../../services/authService";
 
-export const Navbar = () => {
-    return (
-        <nav className="h-16 border-b border-slate-800 glass-panel px-6 flex items-center justify-between sticky top-0 z-50">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-600 rounded-lg text-white">
-                    <AlarmClock className="h-6 w-6" />
-                </div>
-                <span className="font-bold text-xl tracking-wide text-white">
-                    Intelligent Cognitive Alarm
-                </span>
-            </div>
-            <div className="flex items-center gap-4">
-                <button className="p-2 text-slate-400 hover:text-white transition-colors">
-                    <Bell className="h-5 w-5" />
-                </button>
-                <div className="h-8 w-8 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center text-indigo-300 font-semibold">
-                    U
-                </div>
-            </div>
-        </nav>
-    );
-};
+export default function Navbar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate("/login", { replace: true });
+  };
+
+  return (
+    <header className="navbar">
+      <div className="navbar-brand">
+        <FaBrain className="navbar-icon" />
+        <div>
+          <h1>Intelligent Cognitive Alarm</h1>
+          <p>Wake Smarter. Think Faster.</p>
+        </div>
+      </div>
+
+      <nav className="navbar-links">
+        <Link to="/dashboard" className="navbar-link">
+          <FaHome /> Dashboard
+        </Link>
+        <button type="button" className="navbar-link navbar-link-btn">
+          <FaUserCircle /> Profile
+        </button>
+        <button type="button" className="navbar-logout" onClick={handleLogout}>
+          <FaSignOutAlt /> Logout
+        </button>
+      </nav>
+    </header>
+  );
+}
