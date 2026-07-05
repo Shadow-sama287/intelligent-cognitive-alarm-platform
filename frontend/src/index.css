@@ -1,27 +1,100 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
-@theme {
-  --color-brand-50: #f0f4ff;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-900: #1e1b4b;
-  --color-dark-bg: #0f172a;
-  --color-dark-card: #1e293b;
-  --color-dark-border: #334155;
+:root {
+  /* Palette */
+  --color-bg-peach: #fdf1ea;
+  --color-bg-pink: #f7e7f0;
+  --color-bg-lavender: #ece4fb;
+  --color-purple: #8b7cf6;
+  --color-purple-dark: #6f5ff0;
+  --color-pink: #f2789a;
+  --color-orange: #f4a26a;
+  --color-text: #1e2138;
+  --color-text-muted: #6b7280;
+  --color-card: rgba(255, 255, 255, 0.78);
+  --color-card-solid: #ffffff;
+  --color-border: rgba(30, 33, 56, 0.08);
+
+  /* Status colors */
+  --status-active-bg: #dcfce7;
+  --status-active-text: #16a34a;
+  --status-tomorrow-bg: #dbeafe;
+  --status-tomorrow-text: #2563eb;
+  --status-inactive-bg: #f1f2f6;
+  --status-inactive-text: #6b7280;
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(90deg, var(--color-purple), var(--color-pink), var(--color-orange));
+  --gradient-bg: linear-gradient(135deg, var(--color-bg-peach) 0%, var(--color-bg-pink) 50%, var(--color-bg-lavender) 100%);
+
+  /* Effects */
+  --shadow-soft: 0 10px 30px rgba(139, 124, 246, 0.14);
+  --shadow-card: 0 4px 16px rgba(30, 33, 56, 0.06);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
-  background-color: #020617; /* bg-slate-950 */
-  color: #f8fafc; /* text-slate-100 */
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  min-height: 100vh;
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  color: var(--color-text);
+  background: var(--gradient-bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
 }
 
-.glass-panel {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font-family: "Inter", sans-serif;
+}
+
+a {
+  color: var(--color-purple-dark);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

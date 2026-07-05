@@ -1,39 +1,107 @@
-import React from 'react';
+import {
+  FaPlus,
+  FaBell,
+  FaBrain,
+  FaClock,
+  FaCalendarAlt,
+  FaCalculator,
+  FaPuzzlePiece,
+  FaQuestionCircle,
+  FaChevronRight,
+} from "react-icons/fa";
+import { authService } from "../services/authService";
 
-export const Dashboard = () => {
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-                    <p className="text-slate-400">Welcome back! Manage your active cognitive alarms.</p>
-                </div>
-                <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-all shadow-lg shadow-indigo-500/20">
-                    + Set New Alarm
-                </button>
-            </div>
+// Mock data — swap for a real fetch once the backend is ready.
+const alarms = [
+  { id: 1, time: "06:30 AM", task: "Math Challenge", status: "active", icon: FaCalculator },
+  { id: 2, time: "08:00 AM", task: "Memory Puzzle", status: "tomorrow", icon: FaPuzzlePiece },
+  { id: 3, time: "09:30 PM", task: "Logic Quiz", status: "inactive", icon: FaQuestionCircle },
+];
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 rounded-2xl">
-                    <h3 className="text-slate-400 text-sm font-medium">Next Alarm</h3>
-                    <p className="text-4xl font-extrabold text-white mt-2">07:00 AM</p>
-                    <span className="inline-block mt-3 px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full border border-emerald-500/20">
-                        Active • Math Challenge
-                    </span>
-                </div>
-
-                <div className="glass-panel p-6 rounded-2xl">
-                    <h3 className="text-slate-400 text-sm font-medium">Habit Score</h3>
-                    <p className="text-4xl font-extrabold text-indigo-400 mt-2">88 / 100</p>
-                    <p className="text-xs text-slate-500 mt-2">+4 points from last week</p>
-                </div>
-
-                <div className="glass-panel p-6 rounded-2xl">
-                    <h3 className="text-slate-400 text-sm font-medium">Snooze Rate</h3>
-                    <p className="text-4xl font-extrabold text-amber-400 mt-2">12%</p>
-                    <p className="text-xs text-slate-500 mt-2">-5% reduction achieved</p>
-                </div>
-            </div>
-        </div>
-    );
+const statusLabel = {
+  active: "Active",
+  tomorrow: "Tomorrow",
+  inactive: "Inactive",
 };
+
+export default function Dashboard() {
+  const user = authService.getCurrentUser();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
+
+  return (
+    <div className="dashboard">
+      <div className="dashboard-hero">
+        <div>
+          <h2>
+            {greeting}, {user?.username || "there"}! 👋
+          </h2>
+          <p>Manage your cognitive alarms effortlessly.</p>
+        </div>
+        <button type="button" className="btn-gradient btn-inline">
+          <FaPlus /> New Alarm
+        </button>
+      </div>
+
+      <div className="stat-grid">
+        <div className="stat-card">
+          <div className="stat-icon purple">
+            <FaBell />
+          </div>
+          <div>
+            <p className="stat-label">Active Alarms</p>
+            <h3>3</h3>
+            <p className="stat-sub">You have 3 alarms set</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon orange">
+            <FaBrain />
+          </div>
+          <div>
+            <p className="stat-label">Habit Score</p>
+            <h3>88%</h3>
+            <p className="stat-sub">Great consistency!</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon lavender">
+            <FaClock />
+          </div>
+          <div>
+            <p className="stat-label">Next Alarm</p>
+            <h3>06:30 AM</h3>
+            <p className="stat-sub">In 2h 15m</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="upcoming-section">
+        <h3>
+          <FaCalendarAlt /> Upcoming Alarms
+        </h3>
+        <div className="alarm-list">
+          {alarms.map(({ id, time, task, status, icon: Icon }) => (
+            <div className="alarm-item" key={id}>
+              <div className={`alarm-icon ${status}`}>
+                <Icon />
+              </div>
+              <div className="alarm-info">
+                <h4>{time}</h4>
+                <p>{task}</p>
+              </div>
+              <span className={`alarm-status ${status}`}>{statusLabel[status]}</span>
+              <FaChevronRight className="alarm-chevron" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <footer className="dashboard-footer">
+        <FaBrain /> © 2026 Intelligent Cognitive Alarm Platform
+      </footer>
+    </div>
+  );
+}
