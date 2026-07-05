@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bell, User, AlarmClock } from 'lucide-react';
+import { Bell, User, AlarmClock, LogOut } from 'lucide-react';
+import { logoutUser } from '../../api/auth';
 
 export const Navbar = () => {
     return (
@@ -19,6 +20,13 @@ export const Navbar = () => {
                 <div className="h-8 w-8 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center text-indigo-300 font-semibold">
                     U
                 </div>
+                <button
+                    onClick={logoutUser}
+                    className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                    title="Logout"
+                >
+                    <LogOut className="h-5 w-5" />
+                </button>
             </div>
         </nav>
     );
