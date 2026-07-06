@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.health import router as health_router
-from app.api.v1.challenges import router as challenge_router
+from app.api.v1.challenges import router as challenges_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.alarms import router as alarms_router
 from app.db.session import engine, Base
@@ -24,7 +24,7 @@ app.add_middleware(
 
 # Mount Routers
 app.include_router(health_router, prefix=settings.API_V1_STR, tags=["Health"])
-app.include_router(challenge_router, prefix=settings.API_V1_STR, tags=["Challenges"])  # <-- 2. Register router
+app.include_router(challenges_router, prefix=f"{settings.API_V1_STR}/challenges", tags=["Challenges"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 app.include_router(alarms_router, prefix=f"{settings.API_V1_STR}/alarms", tags=["Alarms"])
 
