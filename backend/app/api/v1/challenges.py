@@ -1,17 +1,23 @@
-from fastapi import APIRouter
-from app.db.mongo import mongo_client
+from fastapi import APIRouter, Depends, Query, HTTPException
+from typing import Optional
+from app.services.challenge_service import challenge_service
 from app.schemas.common import ResponseModel
+from app.api.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
-@router.get("/challenges", response_model=ResponseModel)
-def get_all_challenges():
-    # Fetch all documents from MongoDB 'challenges' collection
-    challenges_col = mongo_client.get_collection("challenges")
-    challenges = list(challenges_col.find({}, {"_id": 0}))  # Exclude Mongo ObjectId for easy JSON formatting
-
-    return ResponseModel(
-        success=True,
-        message=f"Retrieved {len(challenges)} cognitive challenges from MongoDB",
-        data=challenges
-    )
+@router.get("/random", response_model=ResponseModel[dict])
+def get_random_challenge(
+    category: Optional[str] = Query(None),
+    difficulty: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user)
+):
+    # Use user's profile preference if difficulty not specified
+    user_diff = difficulty or (current_user.profile.difficulty_preference.lower() if current_user.profile else "medium")
+    challenge = challenge_service.get_random_challenge(category=category, difficulty=user_diff)
+    
+    if not challenge:
+        raise HTTPException(status_code=404, detail="No cognitive challenges available")
+        
+    return ResponseModel(message="Challenge fetched successfully", data=challenge)
