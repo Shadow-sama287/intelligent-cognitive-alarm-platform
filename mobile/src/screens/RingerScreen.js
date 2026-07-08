@@ -53,10 +53,10 @@ export default function RingerScreen({
       } else {
         setAnswer("");
 
-Alert.alert(
-  "Alarm Dismissed!",
-  `Great job! Solved in ${result.time_taken_seconds} seconds.`
-);
+        Alert.alert(
+          "Incorrect",
+          "Wrong answer! Alarm keeps ringing!"
+        );
       }
     } catch (error) {
       console.error(error.response?.data || error);
@@ -97,7 +97,6 @@ Alert.alert(
             placeholder="Enter your answer"
             value={answer}
             onChangeText={setAnswer}
-            keyboardType="number-pad"
             autoCapitalize="none"
             autoFocus
           />

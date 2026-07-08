@@ -181,6 +181,10 @@ export default function AlarmsScreen() {
               <TouchableOpacity style={styles.editBtn} onPress={() => openEditModal(item)}>
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity style={styles.testBtn} onPress={() => startAlarmSession(item)}>
+                <Text style={styles.testBtnText}>Test Ring</Text>
+              </TouchableOpacity>
               
               <Switch
                 value={item.is_active}
@@ -328,6 +332,18 @@ const styles = StyleSheet.create({
   },
   editBtnText: {
     color: "#333",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  testBtn: {
+    marginRight: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#d4edda",
+    borderRadius: 6,
+  },
+  testBtnText: {
+    color: "#155724",
     fontWeight: "600",
     fontSize: 14,
   },
