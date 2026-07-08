@@ -25,9 +25,9 @@ export default function Navbar() {
         <Link to="/dashboard" className="navbar-link">
           <FaHome /> Dashboard
         </Link>
-        <button type="button" className="navbar-link navbar-link-btn">
+        <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile
-        </button>
+        </Link>
         <button type="button" className="navbar-logout" onClick={handleLogout}>
           <FaSignOutAlt /> Logout
         </button>

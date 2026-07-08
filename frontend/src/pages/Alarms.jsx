@@ -17,9 +17,45 @@ const getCategoryIcon = (category) => {
 export const AlarmsPage = () => {
   const [alarms, setAlarms] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [newAlarmTime, setNewAlarmTime] = useState('07:00');
-  const [category, setCategory] = useState('math');
+  const [editingAlarm, setEditingAlarm] = useState(null);
+  const [alarmForm, setAlarmForm] = useState({
+  title: '',
+  alarm_time: '07:00',
+  days_of_week: [],
+  challenge_category: 'math',
+  difficulty_override: 'default',
+  snooze_limit: 3,
+});
+  const handleChange = (field, value) => {
+  setAlarmForm((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const handleEdit = (alarm) => {
+    setEditingAlarm(alarm);
 
+    setAlarmForm({
+        title: alarm.title,
+        alarm_time: alarm.alarm_time,
+        days_of_week: alarm.days_of_week.split(","),
+        challenge_category: alarm.challenge_category,
+        difficulty_override: alarm.difficulty_override,
+        snooze_limit: alarm.snooze_limit,
+    });
+
+    setShowModal(true);
+};
+const deleteAlarm = async (id) => {
+  try {
+    await apiClient.delete(`/alarms/${id}`);
+    fetchAlarms();
+  } catch (err) {
+    console.error(err);
+    alert("Unable to delete alarm.");
+  }
+};
   const fetchAlarms = async () => {
     try {
       const res = await apiClient.get('/alarms');
@@ -34,15 +70,24 @@ export const AlarmsPage = () => {
   }, []);
 
   const handleCreate = async (e) => {
-    e.preventDefault();
-    await apiClient.post('/alarms', {
-      alarm_time: newAlarmTime,
-      challenge_category: category,
-      days_of_week: 'MON,TUE,WED,THU,FRI',
+  e.preventDefault();
+
+  try {
+    await apiClient.post("/alarms", {
+      title: alarmForm.title,
+      alarm_time: alarmForm.alarm_time,
+      days_of_week: alarmForm.days_of_week.join(","),
+      challenge_category: alarmForm.challenge_category,
+      difficulty_override: alarmForm.difficulty_override,
+      snooze_limit: alarmForm.snooze_limit,
     });
+
     setShowModal(false);
     fetchAlarms();
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const toggleAlarm = async (id) => {
     await apiClient.put(`/alarms/${id}/toggle`);
@@ -76,9 +121,29 @@ export const AlarmsPage = () => {
                   <Icon />
                 </div>
                 <div className="alarm-info">
-                  <h4>{alarm.alarm_time}</h4>
+                  <h4>{alarm.title}</h4>
+                  <p>{alarm.alarm_time}</p>
                   <p className="capitalize">{alarm.challenge_category} Challenge • {alarm.days_of_week}</p>
                 </div>
+                <div className="alarm-actions">
+  <button
+    className="btn-ghost"
+    onClick={() => handleEdit(alarm)}
+  >
+    Edit
+  </button>
+
+  <button
+    className="btn-ghost"
+    onClick={() => {
+      if (window.confirm("Delete this alarm?")) {
+        deleteAlarm(alarm.id);
+      }
+    }}
+  >
+    Delete
+  </button>
+</div>
                 <button 
                   onClick={() => toggleAlarm(alarm.id)} 
                   style={{ 
@@ -103,24 +168,68 @@ export const AlarmsPage = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>Create New Alarm</h2>
+              <h2>
+                {editingAlarm ? "Edit Alarm" : "Create New Alarm"}
+              </h2>
             </div>
             <form onSubmit={handleCreate} className="auth-form">
+            <label>Title</label>
+            <div className="input-group">
+              <input
+                type="text"
+                placeholder="Workday Wakeup"
+                value={alarmForm.title}
+                onChange={(e) => handleChange("title", e.target.value)}
+                required
+              />
+            </div>
               <label>Time</label>
               <div className="input-group">
                 <FaClock className="input-icon" />
-                <input 
-                  type="time" 
-                  value={newAlarmTime}
-                  onChange={(e) => setNewAlarmTime(e.target.value)}
-                  required
+                <input
+                  type="time"
+                  value={alarmForm.alarm_time}
+                  onChange={(e) =>
+                    handleChange("alarm_time", e.target.value)
+                  }
                 />
+              </div><label>Days of Week</label>
+
+              <div className="days-grid">
+                {DAYS.map((day) => (
+                  <label key={day}>
+                    <input
+                      type="checkbox"
+                      checked={alarmForm.days_of_week.includes(day)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          handleChange("days_of_week", [
+                            ...alarmForm.days_of_week,
+                            day,
+                          ]);
+                        } else {
+                          handleChange(
+                            "days_of_week",
+                            alarmForm.days_of_week.filter(
+                              (d) => d !== day
+                            )
+                          );
+                        }
+                      }}
+                    />
+                    {day}
+                  </label>
+                ))}
               </div>
               <label>Challenge Category</label>
               <div className="input-group">
                 <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  value={alarmForm.challenge_category}
+                  onChange={(e)=>
+                  handleChange(
+                  "challenge_category",
+                  e.target.value)
+                  }
                   style={{ 
                     width: '100%', 
                     padding: '14px 16px', 
@@ -136,8 +245,35 @@ export const AlarmsPage = () => {
                   <option value="math">Math</option>
                   <option value="memory">Memory</option>
                   <option value="logic">Logic</option>
+                  <option value="riddle">Riddle</option>
                 </select>
-              </div>
+              </div><label>Difficulty Override</label>
+
+              <select
+                value={alarmForm.difficulty_override}
+                onChange={(e) =>
+                  handleChange("difficulty_override", e.target.value)
+                }
+              >
+                <option value="default">Default</option>
+                <option value="beginner">Beginner</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="expert">Expert</option>
+
+              </select>
+              <label>Snooze Limit</label>
+
+              <input
+                type="number"
+                min="0"
+                max="10"
+                value={alarmForm.snooze_limit}
+                onChange={(e) =>
+                  handleChange("snooze_limit", Number(e.target.value))
+                }
+              />
               <div className="modal-actions">
                 <button
                   type="button"
@@ -150,7 +286,7 @@ export const AlarmsPage = () => {
                   type="submit"
                   className="btn-gradient"
                 >
-                  Save Alarm
+                  {editingAlarm ? "Update Alarm" : "Save Alarm"}
                 </button>
               </div>
             </form>

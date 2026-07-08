@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/useAuthStore";
 import "./index.css";
 import "./App.css";
+import Profile from "./pages/Profile";
 
 function DashboardLayout() {
   return (
@@ -37,8 +38,18 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />} />
           <Route path="/alarms" element={<><Navbar /><div className="max-w-7xl mx-auto p-4"><AlarmsPage /></div></>} />
+          <Route
+          path="/profile"
+          element={
+            <>
+              <Navbar />
+              <div className="max-w-7xl mx-auto p-4">
+                <Profile />
+              </div>
+            </>
+          }
+        />
         </Route>
-
         {/* Fallback: send authenticated users home, everyone else to login */}
         <Route
           path="*"
