@@ -182,13 +182,6 @@ export default function AlarmsScreen() {
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity
-                style={styles.editBtn}
-                onPress={() => startAlarmSession(item)}
-              >
-                <Text style={styles.editBtnText}>Test</Text>
-              </TouchableOpacity>
-
               <Switch
                 value={item.is_active}
                 onValueChange={() => toggleSwitch(item.id)}
