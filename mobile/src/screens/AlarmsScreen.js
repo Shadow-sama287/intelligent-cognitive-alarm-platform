@@ -78,6 +78,29 @@ export default function AlarmsScreen() {
     setModalVisible(true);
   };
 
+  const handleDeleteAlarm = (id) => {
+    Alert.alert(
+      "Delete Alarm",
+      "Are you sure you want to delete this alarm?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await mobileApi.delete(`/alarms/${id}`);
+              loadAlarms();
+            } catch (e) {
+              Alert.alert("Error", "Could not delete alarm");
+              console.error(e);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleSaveAlarm = async () => {
     if (selectedDays.length === 0) {
       Alert.alert("Validation Error", "Please select at least one day.");
@@ -128,6 +151,9 @@ export default function AlarmsScreen() {
               <Text style={styles.subText}>{item.challenge_category.toUpperCase()} • {item.days_of_week}</Text>
             </View>
             <View style={styles.cardActions}>
+              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteAlarm(item.id)}>
+                <Text style={styles.deleteBtnText}>Del</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.editBtn} onPress={() => openEditModal(item)}>
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
@@ -262,13 +288,25 @@ const styles = StyleSheet.create({
   },
   editBtn: {
     marginRight: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     backgroundColor: "#f0f0f0",
     borderRadius: 6,
   },
   editBtnText: {
     color: "#333",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  deleteBtn: {
+    marginRight: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#fee",
+    borderRadius: 6,
+  },
+  deleteBtnText: {
+    color: "#d9534f",
     fontWeight: "600",
     fontSize: 14,
   },
