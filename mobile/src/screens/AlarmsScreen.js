@@ -6,6 +6,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "@react-navigation/native";
 import { mobileApi } from "../services/api";
+import RingerScreen from "./RingerScreen";
 
 const DAYS_OPTIONS = [
   { label: 'M', value: 'MON' },
@@ -21,7 +22,9 @@ export default function AlarmsScreen() {
   const [alarms, setAlarms] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAlarmId, setEditingAlarmId] = useState(null);
-  
+  const [ringerVisible, setRingerVisible] = useState(false);
+  const [sessionData, setSessionData] = useState(null);
+  //const [startingSession, setStartingSession] = useState(false);
   // Alarm Form State
   const [newTitle, setNewTitle] = useState("");
   const [newTime, setNewTime] = useState("07:00");
@@ -130,7 +133,27 @@ export default function AlarmsScreen() {
       console.error(e);
     }
   };
+  const startAlarmSession = async (alarm) => {
+  try {
+    const response = await mobileApi.post("/sessions/start", null, {
+      params: {
+        alarm_id: alarm.id,
+        category: alarm.challenge_category,
+      },
+    });
 
+    setSessionData(response.data.data);
+    setRingerVisible(true);
+  } catch (error) {
+    console.error(error.response?.data || error);;
+
+    Alert.alert(
+  "Error",
+  error.response?.data?.detail ||
+    "Could not start alarm session."
+);
+  }
+};
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -154,9 +177,11 @@ export default function AlarmsScreen() {
               <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteAlarm(item.id)}>
                 <Text style={styles.deleteBtnText}>Del</Text>
               </TouchableOpacity>
+              
               <TouchableOpacity style={styles.editBtn} onPress={() => openEditModal(item)}>
                 <Text style={styles.editBtnText}>Edit</Text>
               </TouchableOpacity>
+              
               <Switch
                 value={item.is_active}
                 onValueChange={() => toggleSwitch(item.id)}
@@ -232,6 +257,14 @@ export default function AlarmsScreen() {
           </View>
         </View>
       </Modal>
+      <RingerScreen
+        visible={ringerVisible}
+        sessionData={sessionData}
+        onDismissSuccess={() => {
+          setRingerVisible(false);
+          setSessionData(null);
+        }}
+      />
     </SafeAreaView>
   );
 }
