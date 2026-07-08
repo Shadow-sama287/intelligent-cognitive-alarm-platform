@@ -1,6 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
-import { FaPlus, FaClock, FaToggleOn, FaToggleOff, FaCalculator, FaPuzzlePiece, FaQuestionCircle, FaChevronRight } from 'react-icons/fa';
+import React, { useEffect, useState } from "react";
+import { apiClient } from "../api/client";
+import {
+  FaPlus,
+  FaClock,
+  FaToggleOn,
+  FaToggleOff,
+  FaCalculator,
+  FaPuzzlePiece,
+  FaQuestionCircle,
+  FaChevronRight,
+} from "react-icons/fa";
 
 const getCategoryIcon = (category) => {
   switch (category?.toLowerCase()) {
@@ -15,50 +24,54 @@ const getCategoryIcon = (category) => {
 };
 
 export const AlarmsPage = () => {
+  const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   const [alarms, setAlarms] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingAlarm, setEditingAlarm] = useState(null);
   const [alarmForm, setAlarmForm] = useState({
-  title: '',
-  alarm_time: '07:00',
-  days_of_week: [],
-  challenge_category: 'math',
-  difficulty_override: 'default',
-  snooze_limit: 3,
-});
+    title: "",
+    alarm_time: "07:00",
+    days_of_week: [],
+    challenge_category: "math",
+    difficulty_override: "default",
+    snooze_limit: 3,
+  });
+
   const handleChange = (field, value) => {
-  setAlarmForm((prev) => ({
-    ...prev,
-    [field]: value,
-  }));
-};
-const DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-const handleEdit = (alarm) => {
+    setAlarmForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleEdit = (alarm) => {
     setEditingAlarm(alarm);
 
     setAlarmForm({
-        title: alarm.title,
-        alarm_time: alarm.alarm_time,
-        days_of_week: alarm.days_of_week.split(","),
-        challenge_category: alarm.challenge_category,
-        difficulty_override: alarm.difficulty_override,
-        snooze_limit: alarm.snooze_limit,
+      title: alarm.title,
+      alarm_time: alarm.alarm_time,
+      days_of_week: alarm.days_of_week.split(","),
+      challenge_category: alarm.challenge_category,
+      difficulty_override: alarm.difficulty_override,
+      snooze_limit: alarm.snooze_limit,
     });
 
     setShowModal(true);
-};
-const deleteAlarm = async (id) => {
-  try {
-    await apiClient.delete(`/alarms/${id}`);
-    fetchAlarms();
-  } catch (err) {
-    console.error(err);
-    alert("Unable to delete alarm.");
-  }
-};
+  };
+
+  const deleteAlarm = async (id) => {
+    try {
+      await apiClient.delete(`/alarms/${id}`);
+      fetchAlarms();
+    } catch (err) {
+      console.error(err);
+      alert("Unable to delete alarm.");
+    }
+  };
+
   const fetchAlarms = async () => {
     try {
-      const res = await apiClient.get('/alarms');
+      const res = await apiClient.get("/alarms");
       setAlarms(res.data.data);
     } catch (err) {
       console.error(err);
@@ -70,24 +83,44 @@ const deleteAlarm = async (id) => {
   }, []);
 
   const handleCreate = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    await apiClient.post("/alarms", {
-      title: alarmForm.title,
-      alarm_time: alarmForm.alarm_time,
-      days_of_week: alarmForm.days_of_week.join(","),
-      challenge_category: alarmForm.challenge_category,
-      difficulty_override: alarmForm.difficulty_override,
-      snooze_limit: alarmForm.snooze_limit,
-    });
+    try {
+      const payload = {
+        title: alarmForm.title,
+        alarm_time: alarmForm.alarm_time,
+        days_of_week: alarmForm.days_of_week.join(","),
+        challenge_category: alarmForm.challenge_category,
+        difficulty_override: alarmForm.difficulty_override,
+        snooze_limit: alarmForm.snooze_limit,
+      };
 
-    setShowModal(false);
-    fetchAlarms();
-  } catch (err) {
-    console.error(err);
-  }
-};
+      if (editingAlarm) {
+        // If editing an existing alarm, use PUT
+        await apiClient.put(`/alarms/${editingAlarm.id}`, payload);
+      } else {
+        // If creating a new alarm, use POST
+        await apiClient.post("/alarms", payload);
+      }
+
+      // Close modal and refresh alarms
+      setShowModal(false);
+      fetchAlarms();
+
+      // Reset the form state
+      setEditingAlarm(null);
+      setAlarmForm({
+        title: "",
+        alarm_time: "07:00",
+        days_of_week: [],
+        challenge_category: "math",
+        difficulty_override: "default",
+        snooze_limit: 3,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const toggleAlarm = async (id) => {
     await apiClient.put(`/alarms/${id}/toggle`);
@@ -101,9 +134,20 @@ const deleteAlarm = async (id) => {
           <h2>Alarm Scheduler</h2>
           <p>View, toggle, and create your cognitive alarms.</p>
         </div>
-        <button 
+        <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingAlarm(null);
+            setAlarmForm({
+              title: "",
+              alarm_time: "07:00",
+              days_of_week: [],
+              challenge_category: "math",
+              difficulty_override: "default",
+              snooze_limit: 3,
+            });
+            setShowModal(true);
+          }}
           className="btn-gradient btn-inline"
         >
           <FaPlus /> New Alarm
@@ -112,55 +156,66 @@ const deleteAlarm = async (id) => {
 
       <div className="upcoming-section">
         <div className="alarm-list">
-          {alarms.length > 0 ? alarms.map((alarm) => {
-            const Icon = getCategoryIcon(alarm.challenge_category);
-            const statusKey = alarm.is_active ? "active" : "inactive";
-            return (
-              <div className="alarm-item" key={alarm.id}>
-                <div className={`alarm-icon ${statusKey}`}>
-                  <Icon />
-                </div>
-                <div className="alarm-info">
-                  <h4>{alarm.title}</h4>
-                  <p>{alarm.alarm_time}</p>
-                  <p className="capitalize">{alarm.challenge_category} Challenge • {alarm.days_of_week}</p>
-                </div>
-                <div className="alarm-actions">
-  <button
-    className="btn-ghost"
-    onClick={() => handleEdit(alarm)}
-  >
-    Edit
-  </button>
+          {alarms.length > 0 ? (
+            alarms.map((alarm) => {
+              const Icon = getCategoryIcon(alarm.challenge_category);
+              const statusKey = alarm.is_active ? "active" : "inactive";
+              return (
+                <div className="alarm-item" key={alarm.id}>
+                  <div className={`alarm-icon ${statusKey}`}>
+                    <Icon />
+                  </div>
+                  <div className="alarm-info">
+                    <h4>{alarm.title}</h4>
+                    <p>{alarm.alarm_time}</p>
+                    <p className="capitalize">
+                      {alarm.challenge_category} Challenge •{" "}
+                      {alarm.days_of_week}
+                    </p>
+                  </div>
+                  <div className="alarm-actions">
+                    <button
+                      className="btn-ghost"
+                      onClick={() => handleEdit(alarm)}
+                    >
+                      Edit
+                    </button>
 
-  <button
-    className="btn-ghost"
-    onClick={() => {
-      if (window.confirm("Delete this alarm?")) {
-        deleteAlarm(alarm.id);
-      }
-    }}
-  >
-    Delete
-  </button>
-</div>
-                <button 
-                  onClick={() => toggleAlarm(alarm.id)} 
-                  style={{ 
-                    fontSize: '28px', 
-                    color: alarm.is_active ? 'var(--color-purple)' : 'var(--color-text-muted)', 
-                    background: 'none', 
-                    border: 'none', 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  {alarm.is_active ? <FaToggleOn /> : <FaToggleOff />}
-                </button>
-              </div>
-            );
-          }) : <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>No alarms found. Create one!</p>}
+                    <button
+                      className="btn-ghost"
+                      onClick={() => {
+                        if (window.confirm("Delete this alarm?")) {
+                          deleteAlarm(alarm.id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => toggleAlarm(alarm.id)}
+                    style={{
+                      fontSize: "28px",
+                      color: alarm.is_active
+                        ? "var(--color-purple)"
+                        : "var(--color-text-muted)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {alarm.is_active ? <FaToggleOn /> : <FaToggleOff />}
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <p style={{ color: "var(--color-text-muted)", fontSize: "14px" }}>
+              No alarms found. Create one!
+            </p>
+          )}
         </div>
       </div>
 
@@ -168,32 +223,29 @@ const deleteAlarm = async (id) => {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h2>
-                {editingAlarm ? "Edit Alarm" : "Create New Alarm"}
-              </h2>
+              <h2>{editingAlarm ? "Edit Alarm" : "Create New Alarm"}</h2>
             </div>
             <form onSubmit={handleCreate} className="auth-form">
-            <label>Title</label>
-            <div className="input-group">
-              <input
-                type="text"
-                placeholder="Workday Wakeup"
-                value={alarmForm.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                required
-              />
-            </div>
+              <label>Title</label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  placeholder="Workday Wakeup"
+                  value={alarmForm.title}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  required
+                />
+              </div>
               <label>Time</label>
               <div className="input-group">
                 <FaClock className="input-icon" />
                 <input
                   type="time"
                   value={alarmForm.alarm_time}
-                  onChange={(e) =>
-                    handleChange("alarm_time", e.target.value)
-                  }
+                  onChange={(e) => handleChange("alarm_time", e.target.value)}
                 />
-              </div><label>Days of Week</label>
+              </div>
+              <label>Days of Week</label>
 
               <div className="days-grid">
                 {DAYS.map((day) => (
@@ -210,9 +262,7 @@ const deleteAlarm = async (id) => {
                         } else {
                           handleChange(
                             "days_of_week",
-                            alarmForm.days_of_week.filter(
-                              (d) => d !== day
-                            )
+                            alarmForm.days_of_week.filter((d) => d !== day),
                           );
                         }
                       }}
@@ -225,21 +275,19 @@ const deleteAlarm = async (id) => {
               <div className="input-group">
                 <select
                   value={alarmForm.challenge_category}
-                  onChange={(e)=>
-                  handleChange(
-                  "challenge_category",
-                  e.target.value)
+                  onChange={(e) =>
+                    handleChange("challenge_category", e.target.value)
                   }
-                  style={{ 
-                    width: '100%', 
-                    padding: '14px 16px', 
-                    borderRadius: 'var(--radius-md)', 
-                    border: '1px solid var(--color-border)', 
-                    background: 'var(--color-card-solid)', 
-                    fontSize: '14px', 
-                    color: 'var(--color-text)',
-                    appearance: 'none',
-                    cursor: 'pointer'
+                  style={{
+                    width: "100%",
+                    padding: "14px 16px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-card-solid)",
+                    fontSize: "14px",
+                    color: "var(--color-text)",
+                    appearance: "none",
+                    cursor: "pointer",
                   }}
                 >
                   <option value="math">Math</option>
@@ -247,7 +295,8 @@ const deleteAlarm = async (id) => {
                   <option value="logic">Logic</option>
                   <option value="riddle">Riddle</option>
                 </select>
-              </div><label>Difficulty Override</label>
+              </div>
+              <label>Difficulty Override</label>
 
               <select
                 value={alarmForm.difficulty_override}
@@ -261,7 +310,6 @@ const deleteAlarm = async (id) => {
                 <option value="medium">Medium</option>
                 <option value="hard">Hard</option>
                 <option value="expert">Expert</option>
-
               </select>
               <label>Snooze Limit</label>
 
@@ -282,10 +330,7 @@ const deleteAlarm = async (id) => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn-gradient"
-                >
+                <button type="submit" className="btn-gradient">
                   {editingAlarm ? "Update Alarm" : "Save Alarm"}
                 </button>
               </div>
