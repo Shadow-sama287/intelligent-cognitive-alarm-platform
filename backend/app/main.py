@@ -6,6 +6,7 @@ from app.api.v1.challenges import router as challenges_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.alarms import router as alarms_router
 from app.api.v1.sessions import router as sessions_router
+from app.api.v1.verify import router as verify_router
 from app.db.session import engine, Base
 # Ensure models are imported so SQLAlchemy metadata is populated
 from app.db import base as _models
@@ -29,6 +30,7 @@ app.include_router(challenges_router, prefix=f"{settings.API_V1_STR}/challenges"
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 app.include_router(alarms_router, prefix=f"{settings.API_V1_STR}/alarms", tags=["Alarms"])
 app.include_router(sessions_router, prefix=f"{settings.API_V1_STR}/sessions", tags=["Sessions"])
+app.include_router(verify_router, prefix=f"{settings.API_V1_STR}/challenges", tags=["Verification"])
 
 @app.get("/")
 def root():
