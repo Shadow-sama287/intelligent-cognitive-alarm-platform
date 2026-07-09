@@ -1,10 +1,25 @@
 import { create } from 'zustand';
 import { apiClient } from '../api/client';
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
+
+  // Re-fetch the logged-in user from the server.
+  // Called on app startup so `user` is populated even after a page refresh.
+  init: async () => {
+    const token = localStorage.getItem('token');
+    if (!token || get().user) return; // already loaded or no session
+    try {
+      const userRes = await apiClient.get('/auth/me');
+      set({ user: userRes.data.data });
+    } catch {
+      // Token is invalid/expired — clear the session
+      localStorage.removeItem('token');
+      set({ user: null, token: null, isAuthenticated: false });
+    }
+  },
 
   login: async (email, password) => {
     const formData = new FormData();
@@ -37,4 +52,4 @@ export const useAuthStore = create((set) => ({
     localStorage.removeItem('token');
     set({ user: null, token: null, isAuthenticated: false });
   }
-}));
+}));

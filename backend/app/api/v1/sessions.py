@@ -1,18 +1,33 @@
 import uuid
 import time
+import logging
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 from app.db.redis import redis_client
+from app.db.session import get_db
 from app.services.challenge_service import challenge_service
+from app.services.generators.llm_gen import llm_gen
 from app.schemas.common import ResponseModel
 from app.api.deps import get_current_user
 from app.models.user import User
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/start", response_model=ResponseModel[dict])
-def start_alarm_session(alarm_id: str, category: str = "math", current_user: User = Depends(get_current_user)):
+def start_alarm_session(alarm_id: str, category: str = "math", current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session_id = str(uuid.uuid4())
-    challenge = challenge_service.get_random_challenge(category=category, difficulty=current_user.profile.difficulty_preference.lower() if current_user.profile else "medium")
+    difficulty = current_user.profile.difficulty_preference.lower() if current_user.profile else "medium"
+    
+    challenge = None
+    try:
+        challenge = llm_gen.generate(db=db, user_id=str(current_user.id), difficulty=difficulty, category=category)
+        challenge["_id"] = f"gen-{uuid.uuid4()}" # Pseudo ID for dynamically generated challenge
+    except Exception as e:
+        logger.error(f"Failed to generate challenge via LLM: {e}")
+        
+    if not challenge:
+        challenge = challenge_service.get_random_challenge(category=category, difficulty=difficulty)
     
     if not challenge:
         raise HTTPException(status_code=404, detail="No available challenges for this category")
