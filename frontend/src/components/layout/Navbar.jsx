@@ -28,9 +28,6 @@ export default function Navbar() {
         <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile
         </Link>
-        <Link to="/snooze-settings" className="navbar-link">
-          <FaCog /> Settings
-        </Link>
         <button type="button" className="navbar-logout" onClick={handleLogout}>
           <FaSignOutAlt /> Logout
         </button>
