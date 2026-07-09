@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, Text
+from sqlalchemy import String, DateTime, Text, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.session import Base
@@ -15,4 +15,7 @@ class UserChallengeHistory(Base):
     difficulty: Mapped[str] = mapped_column(String(20), nullable=False)
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     correct_answer: Mapped[str] = mapped_column(String(500), nullable=False)
+    # Performance logging columns
+    time_taken_seconds: Mapped[float] = mapped_column(Float, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=True)
     solved_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

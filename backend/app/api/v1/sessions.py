@@ -40,7 +40,11 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         "correct_answer": str(challenge["correct_answer"]).strip().lower(),
         "start_time": time.time(),
         "attempts": 0,
-        "status": "ringing"
+        "status": "ringing",
+        # Fields needed for performance logging in verify.py
+        "category": category,
+        "difficulty": difficulty,
+        "prompt": challenge.get("prompt", challenge.get("question", "")),
     }
 
     # Save to Redis for 5 minutes (300s)
