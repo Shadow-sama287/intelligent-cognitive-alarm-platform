@@ -62,9 +62,14 @@ export default function Dashboard() {
           </h2>
           <p>Manage your cognitive alarms effortlessly.</p>
         </div>
-        <Link to="/alarms" className="btn-gradient btn-inline">
-          <FaPlus /> New Alarm
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/practice" className="btn-gradient btn-inline">
+            <FaBrain /> Practice
+          </Link>
+          <Link to="/alarms" className="btn-gradient btn-inline">
+            <FaPlus /> New Alarm
+          </Link>
+        </div>
       </div>
 
       <div className="stat-grid">

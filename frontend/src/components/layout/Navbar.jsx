@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaBrain, FaHome, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { FaBrain, FaHome, FaUserCircle, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { useAuthStore } from "../../store/useAuthStore";
 
 export default function Navbar() {
@@ -27,6 +27,9 @@ export default function Navbar() {
         </Link>
         <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile
+        </Link>
+        <Link to="/snooze-settings" className="navbar-link">
+          <FaCog /> Settings
         </Link>
         <button type="button" className="navbar-logout" onClick={handleLogout}>
           <FaSignOutAlt /> Logout

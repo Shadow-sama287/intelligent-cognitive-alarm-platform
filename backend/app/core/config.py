@@ -32,3 +32,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+print("DB URI =", settings.SQLALCHEMY_DATABASE_URI)
