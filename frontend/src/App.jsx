@@ -3,12 +3,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import { AlarmsPage } from "./pages/Alarms";
+import Profile from "./pages/Profile";
+import SnoozeSettings from "./pages/SnoozeSettings";
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useAuthStore } from "./store/useAuthStore";
 import "./index.css";
 import "./App.css";
-import Profile from "./pages/Profile";
 
 function DashboardLayout() {
   return (
@@ -37,19 +38,39 @@ function App() {
         {/* Protected area */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />} />
-          <Route path="/alarms" element={<><Navbar /><div className="max-w-7xl mx-auto p-4"><AlarmsPage /></div></>} />
           <Route
-          path="/profile"
-          element={
-            <>
-              <Navbar />
-              <div className="max-w-7xl mx-auto p-4">
-                <Profile />
-              </div>
-            </>
-          }
-        />
+            path="/alarms"
+            element={
+              <>
+                <Navbar />
+                <div className="max-w-7xl mx-auto p-4">
+                  <AlarmsPage />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <>
+                <Navbar />
+                <div className="max-w-7xl mx-auto p-4">
+                  <Profile />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="/snooze-settings"
+            element={
+              <>
+                <Navbar />
+                <SnoozeSettings />
+              </>
+            }
+          />
         </Route>
+
         {/* Fallback: send authenticated users home, everyone else to login */}
         <Route
           path="*"
