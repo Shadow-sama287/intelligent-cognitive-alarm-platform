@@ -53,7 +53,7 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 pip install -r backend/requirements.txt
-python -m uvicorn backend.app.main:app --reload
+uvicorn backend.app.main:app --reload
 ```
 
 Or from inside the `backend/` directory:
@@ -68,7 +68,7 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+uvicorn backend.app.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`.

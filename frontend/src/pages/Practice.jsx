@@ -139,7 +139,7 @@ export default function Practice() {
             Choose a topic and difficulty, then solve a series of challenges from Math, Memory, and Word categories.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-indigo-100 shadow-lg shadow-indigo-900/20 backdrop-blur-xl">
+        <div className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 shadow-lg shadow-violet-900/20 backdrop-blur-xl">
           <FaBrain /> Practice Playground
         </div>
       </div>
@@ -158,7 +158,7 @@ export default function Practice() {
                 className={`rounded-full px-4 py-3 text-left text-sm font-semibold transition ${
                   selectedCategory === category.id
                     ? "bg-violet-500 text-white shadow-lg shadow-violet-500/20"
-                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                    : "bg-slate-900/70 text-slate-100 hover:bg-slate-900/90"
                 }`}
               >
                 {category.label}
@@ -175,7 +175,7 @@ export default function Practice() {
                 className={`rounded-full px-4 py-3 text-left text-sm font-semibold transition ${
                   selectedLevel === level
                     ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                    : "bg-white/5 text-slate-200 hover:bg-white/10"
+                    : "bg-slate-900/70 text-slate-100 hover:bg-slate-900/90"
                 }`}
               >
                 {level}

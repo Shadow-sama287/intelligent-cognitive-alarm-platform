@@ -10,13 +10,20 @@ export const ChallengeWidget = ({ challenge, onVerify }) => {
     e.preventDefault();
     if (!answer.trim()) return;
     setLoading(true);
-    const result = await onVerify(answer);
-    setLoading(false);
-    
-    if (result.is_correct) {
-      setFeedback({ success: true, message: `Correct! Solved in ${result.time_taken_seconds}s` });
-    } else {
-      setFeedback({ success: false, message: 'Incorrect answer. Try again!' });
+    setFeedback(null);
+
+    try {
+      const result = await onVerify(answer);
+      if (result.is_correct) {
+        setFeedback({ success: true, message: `Correct! Solved in ${result.time_taken_seconds}s` });
+      } else {
+        setFeedback({ success: false, message: 'Incorrect answer. Try again!' });
+      }
+    } catch (error) {
+      console.error('Verification failed', error);
+      setFeedback({ success: false, message: 'Unable to verify answer. Please try again later.' });
+    } finally {
+      setLoading(false);
     }
   };
 
