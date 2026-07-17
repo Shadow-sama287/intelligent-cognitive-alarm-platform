@@ -43,10 +43,12 @@ export const AlarmsPage = () => {
   const [alarms, setAlarms] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingAlarm, setEditingAlarm] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [alarmForm, setAlarmForm] = useState({
     title: "",
     alarm_time: "07:00",
-    days_of_week: [],
+    days_of_week: ["MON", "TUE", "WED", "THU", "FRI"],
     challenge_category: "math",
     difficulty_override: "default",
     snooze_limit: 3,
@@ -57,6 +59,7 @@ export const AlarmsPage = () => {
       ...prev,
       [field]: value,
     }));
+    setErrorMessage("");
   };
 
   const handleEdit = (alarm) => {
@@ -97,6 +100,20 @@ export const AlarmsPage = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    if (!alarmForm.title.trim()) {
+      setErrorMessage("Please enter an alarm label");
+      return;
+    }
+
+    if (alarmForm.days_of_week.length === 0) {
+      setErrorMessage("Please select at least one day");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
       const payload = {
         title: alarmForm.title,
@@ -119,13 +136,18 @@ export const AlarmsPage = () => {
       setAlarmForm({
         title: "",
         alarm_time: "07:00",
-        days_of_week: [],
+        days_of_week: ["MON", "TUE", "WED", "THU", "FRI"],
         challenge_category: "math",
         difficulty_override: "default",
         snooze_limit: 3,
       });
     } catch (err) {
       console.error(err);
+      setErrorMessage(
+        err.response?.data?.detail || "Failed to save alarm. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -373,7 +395,11 @@ export const AlarmsPage = () => {
                 {editingAlarm ? "Edit Alarm" : "Add New Alarm"}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setErrorMessage("");
+                  setIsLoading(false);
+                }}
                 className="text-slate-400 hover:text-slate-600"
               >
                 <FaTimes className="text-xl" />
@@ -502,12 +528,22 @@ export const AlarmsPage = () => {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 bg-white py-4 mt-auto z-10">
+              <div className="sticky bottom-0 bg-white py-4 mt-auto z-10 space-y-3">
+                {errorMessage && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {errorMessage}
+                  </div>
+                )}
                 <button
                   type="submit"
-                  className="w-full py-4 bg-rose-500 text-white font-bold text-base rounded-xl hover:bg-rose-600 transition-colors shadow-lg"
+                  disabled={isLoading}
+                  className={`w-full py-4 font-bold text-base rounded-xl transition-colors shadow-lg ${
+                    isLoading
+                      ? "bg-rose-300 text-white cursor-not-allowed"
+                      : "bg-rose-500 text-white hover:bg-rose-600"
+                  }`}
                 >
-                  {editingAlarm ? "Update Alarm" : "Create Alarm"}
+                  {isLoading ? "Saving..." : editingAlarm ? "Update Alarm" : "Create Alarm"}
                 </button>
               </div>
             </form>

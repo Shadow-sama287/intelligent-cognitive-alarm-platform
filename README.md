@@ -42,7 +42,7 @@ You should see `postgres`, `mongo`, and `redis` all with status `Up`.
 
 ### 3. Start the Backend
 
-In the `backend/` directory:
+From the root of the repository:
 
 ```bash
 python -m venv .venv
@@ -52,8 +52,23 @@ source .venv/bin/activate
 # Activate (Windows):
 .venv\Scripts\activate
 
+pip install -r backend/requirements.txt
+uvicorn backend.app.main:app --reload
+```
+
+Or from inside the `backend/` directory:
+
+```bash
+cd backend
+python -m venv .venv
+
+# Activate (Mac/Linux):
+source .venv/bin/activate
+# Activate (Windows):
+.venv\Scripts\activate
+
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn backend.app.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`.
