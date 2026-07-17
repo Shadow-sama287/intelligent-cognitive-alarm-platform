@@ -3,6 +3,7 @@ import time
 import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.core.state_machine import AlarmStateMachine, AlarmState
 from app.db.redis import redis_client
 from app.db.session import get_db
 from app.services.challenge_service import challenge_service
@@ -32,6 +33,10 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
     if not challenge:
         raise HTTPException(status_code=404, detail="No available challenges for this category")
 
+    # Enforce valid state transition
+    AlarmStateMachine.transition(AlarmState.IDLE, AlarmState.RINGING)
+
+
     session_data = {
         "session_id": session_id,
         "user_id": str(current_user.id),
@@ -39,8 +44,9 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         "challenge_id": challenge["_id"],
         "correct_answer": str(challenge["correct_answer"]).strip().lower(),
         "start_time": time.time(),
+        "time_limit_seconds": challenge.get("time_limit_seconds", 60),
         "attempts": 0,
-        "status": "ringing",
+        "status": AlarmState.RINGING.value,
         # Fields needed for performance logging in verify.py
         "category": category,
         "difficulty": difficulty,
