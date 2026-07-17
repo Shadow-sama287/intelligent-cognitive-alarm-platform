@@ -32,6 +32,7 @@ docker-compose up -d
 ```
 
 Verify all containers are healthy:
+
 ```bash
 docker-compose ps
 ```
@@ -42,24 +43,9 @@ You should see `postgres`, `mongo`, and `redis` all with status `Up`.
 
 ### 3. Start the Backend
 
-From the root of the repository:
+In the `backend/` directory:
 
 ```bash
-python -m venv .venv
-
-# Activate (Mac/Linux):
-source .venv/bin/activate
-# Activate (Windows):
-.venv\Scripts\activate
-
-pip install -r backend/requirements.txt
-uvicorn backend.app.main:app --reload
-```
-
-Or from inside the `backend/` directory:
-
-```bash
-cd backend
 python -m venv .venv
 
 # Activate (Mac/Linux):
@@ -68,7 +54,7 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 pip install -r requirements.txt
-uvicorn backend.app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 The API will be available at `http://localhost:8000`.
@@ -114,9 +100,11 @@ uvicorn app.main:app --reload --host 0.0.0.0
 Run this to find your IP:
 
 **Windows:**
+
 ```powershell
 ipconfig
 ```
+
 Look for the **IPv4 Address** under your **Wi-Fi adapter** (e.g., `192.168.1.5`).
 
 > [!WARNING]
@@ -124,6 +112,7 @@ Look for the **IPv4 Address** under your **Wi-Fi adapter** (e.g., `192.168.1.5`)
 > **Always use the Wi-Fi IPv4 address.** The WSL/Hyper-V addresses (172.x.x.x) are internal virtual adapters — your phone cannot reach them over WiFi.
 
 **Mac/Linux:**
+
 ```bash
 ifconfig | grep "inet " | grep -v 127.0.0.1
 ```
@@ -137,6 +126,7 @@ EXPO_PUBLIC_API_URL=http://<YOUR_WIFI_IPV4>:8000/api/v1
 ```
 
 Example:
+
 ```env
 EXPO_PUBLIC_API_URL=http://192.168.1.5:8000/api/v1
 ```
@@ -167,10 +157,10 @@ To prevent merge conflicts and keep `main` stable, we use a strict feature-branc
 <your-name>/<type>/<short-description>
 ```
 
-| Type | Use for | Example |
-|---|---|---|
-| `feat/` | New features | `karan/feat/user-auth` |
-| `fix/` | Bug fixes | `karan/fix/cors-error` |
+| Type    | Use for       | Example                    |
+| ------- | ------------- | -------------------------- |
+| `feat/` | New features  | `karan/feat/user-auth`     |
+| `fix/`  | Bug fixes     | `karan/fix/cors-error`     |
 | `docs/` | Documentation | `karan/docs/api-endpoints` |
 
 ---
@@ -180,6 +170,7 @@ To prevent merge conflicts and keep `main` stable, we use a strict feature-branc
 If you are working from a **fork** (your own copy of the repo on GitHub), you need to set up two remotes so you can both push your work and stay in sync with the main repository.
 
 **Check your current remotes:**
+
 ```bash
 git remote -v
 ```
@@ -191,6 +182,7 @@ git remote add upstream https://github.com/Shadow-sama287/intelligent-cognitive-
 ```
 
 **Verify both remotes exist:**
+
 ```bash
 git remote -v
 # origin    https://github.com/<YOUR-USERNAME>/intelligent-cognitive-alarm-platform.git (fetch)
@@ -198,6 +190,7 @@ git remote -v
 ```
 
 **To sync your fork with the latest main:**
+
 ```bash
 git fetch upstream
 git checkout main
@@ -207,6 +200,7 @@ git push origin main   # update your fork's main on GitHub
 
 > [!NOTE]
 > Think of it this way:
+>
 > - **`origin`** = your fork on GitHub (you push feature branches here)
 > - **`upstream`** = the team's main repository (you pull updates from here)
 
