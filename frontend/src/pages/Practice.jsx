@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaArrowLeft, FaBrain } from "react-icons/fa";
+import { FaArrowLeft, FaBrain, FaSyncAlt } from "react-icons/fa";
 import { ChallengeWidget } from "../components/challenges/ChallengeWidget";
+import { apiClient } from "../api/client";
 
 const categories = [
   {

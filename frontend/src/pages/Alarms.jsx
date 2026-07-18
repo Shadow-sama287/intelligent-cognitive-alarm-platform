@@ -94,9 +94,19 @@ export const AlarmsPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAlarms();
-  }, []);
+  const [analytics, setAnalytics] = useState(null);
+
+useEffect(() => {
+  const fetchAnalytics = async () => {
+    try {
+      const res = await apiClient.get("/performance/analytics");
+      setAnalytics(res.data.data);
+    } catch (err) {
+      console.error("Failed to fetch analytics", err);
+    }
+  };
+  fetchAnalytics();
+}, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -332,52 +342,81 @@ export const AlarmsPage = () => {
       </div>
 
       {/* Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <div className="lg:col-span-2 bg-slate-200/50 rounded-xl p-6 border border-slate-300/50">
-          <div className="flex justify-between items-start mb-8">
-            <h3 className="text-lg font-bold text-slate-900">
-              Success Rate
-              <br />
-              Insights
-            </h3>
-            <span className="text-xs font-medium text-slate-500">
-              Past 30 Days
-            </span>
-          </div>
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+  <div className="lg:col-span-2 bg-slate-200/50 rounded-xl p-6 border border-slate-300/50">
+    <div className="flex justify-between items-start mb-8">
+      <h3 className="text-lg font-bold text-slate-900">
+        Category
+        <br />
+        Breakdown
+      </h3>
+      <span className="text-xs font-medium text-slate-500">
+        {analytics?.total_solved || 0} Total Solves
+      </span>
+    </div>
 
-          {/* Faux Bar Chart */}
-          <div className="flex items-end justify-between h-32 mb-4 gap-2">
-            {[40, 60, 30, 70, 50, 60, 50].map((h, i) => (
+    {/* Dynamic Bar Chart from Analytics API */}
+    <div className="flex items-end justify-between h-32 mb-4 gap-2">
+      {analytics?.by_category?.length > 0 ? (
+        analytics.by_category.map((cat, i) => {
+          const maxCount = Math.max(...analytics.by_category.map((c) => c.count));
+          const height = maxCount > 0 ? (cat.count / maxCount) * 100 : 0;
+          return (
+            <div key={i} className="flex flex-col items-center w-full gap-1">
+              <span className="text-[10px] text-slate-500 font-semibold">
+                {cat.count}
+              </span>
               <div
-                key={i}
                 className="w-full bg-rose-500 rounded-t-sm"
-                style={{ height: `${h}%` }}
-              ></div>
-            ))}
-          </div>
+                style={{ height: `${height}%` }}
+              />
+              <span className="text-[10px] text-slate-600 capitalize truncate">
+                {cat.category}
+              </span>
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-sm text-slate-500 text-center w-full py-8">
+          No challenge data yet. Solve some challenges!
+        </p>
+      )}
+    </div>
 
-          <hr className="border-slate-300 mb-4" />
-          <p className="text-xs text-slate-600">
-            Your completion rate for the{" "}
-            <strong className="text-slate-900">Math Challenge</strong> has
-            improved by 12% this week.
-          </p>
-        </div>
+    <hr className="border-slate-300 mb-4" />
+    <p className="text-xs text-slate-600">
+      {analytics?.avg_solve_time ? (
+        <>
+          Average solve time:{" "}
+          <strong className="text-slate-900">{analytics.avg_solve_time}s</strong>
+          {" · "}Average attempts:{" "}
+          <strong className="text-slate-900">{analytics.avg_attempts}</strong>
+        </>
+      ) : (
+        "Solve challenges to see performance insights here."
+      )}
+    </p>
+  </div>
 
-        <div className="bg-[#2a2624] rounded-xl p-6 text-white flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Smart Suggestion</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Based on your sleep cycles, an alarm at{" "}
-              <strong className="text-white">06:45 AM</strong> would result in
-              higher morning alertness.
-            </p>
-          </div>
-          <button className="w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 rounded-md mt-6 transition-colors">
-            Update All Alarms
-          </button>
+  {/* Difficulty Distribution Card */}
+  <div className="bg-[#2a2624] rounded-xl p-6 text-white flex flex-col justify-between">
+    <div>
+      <h3 className="text-lg font-semibold mb-4">Difficulty Breakdown</h3>
+      {analytics?.by_difficulty?.length > 0 ? (
+        <div className="space-y-3">
+          {analytics.by_difficulty.map((d, i) => (
+            <div key={i} className="flex justify-between items-center">
+              <span className="text-xs text-slate-400 capitalize">{d.difficulty}</span>
+              <span className="text-sm font-bold text-white">{d.count} solved</span>
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <p className="text-xs text-slate-400">No data yet.</p>
+      )}
+    </div>
+  </div>
+</div>
 
       {/* Modal - Kept mostly same but restyled */}
       {showModal && (
