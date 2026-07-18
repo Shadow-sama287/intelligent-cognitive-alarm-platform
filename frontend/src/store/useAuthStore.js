@@ -22,11 +22,17 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async (email, password) => {
-    const formData = new FormData();
+    const formData = new URLSearchParams();
+    formData.append('grant_type', 'password');
     formData.append('username', email);
     formData.append('password', password);
-    
-    const res = await apiClient.post('/auth/login', formData);
+
+    const res = await apiClient.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
     const token = res.data.access_token;
     localStorage.setItem('token', token);
     set({ token, isAuthenticated: true });
@@ -52,4 +58,4 @@ export const useAuthStore = create((set, get) => ({
     localStorage.removeItem('token');
     set({ user: null, token: null, isAuthenticated: false });
   }
-}));
+}));
