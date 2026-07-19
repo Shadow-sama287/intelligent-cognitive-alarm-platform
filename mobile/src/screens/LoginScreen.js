@@ -9,7 +9,7 @@ export default function LoginScreen({ navigation }) {
 
   const login = async () => {
     try {
-      const requestBody = `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+      const requestBody = `username=${encodeURIComponent(email.trim())}&password=${encodeURIComponent(password)}`;
 
       const response = await mobileApi.post("/auth/login", requestBody, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -20,7 +20,10 @@ export default function LoginScreen({ navigation }) {
       
       navigation.replace("Main");
     } catch (error) {
-      Alert.alert("Login Failed", error.response?.data?.detail || "Invalid credentials");
+      const errorMessage = error.response?.data?.detail 
+        || error.message 
+        || "Invalid credentials";
+      Alert.alert("Login Failed", errorMessage);
     }
   };
 

@@ -11,13 +11,16 @@ export default function RegisterScreen({ navigation }) {
     try {
       await mobileApi.post("/auth/register", {
         full_name: fullName,
-        email: email,
+        email: email.trim(),
         password: password,
       });
       Alert.alert("Success", "Registration successful. Please login.");
       navigation.navigate("Login");
     } catch (error) {
-      Alert.alert("Error", error.response?.data?.detail || "Registration failed");
+      const errorMessage = error.response?.data?.detail 
+        || error.message 
+        || "Registration failed";
+      Alert.alert("Error", errorMessage);
     }
   };
 

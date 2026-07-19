@@ -246,11 +246,13 @@ export default function AlarmsScreen() {
                 selectedValue={newCategory}
                 onValueChange={(itemValue) => setNewCategory(itemValue)}
               >
-                <Picker.Item label="Math" value="math" />
-                <Picker.Item label="Puzzle" value="puzzle" />
-                <Picker.Item label="Typing" value="typing" />
-                <Picker.Item label="Memory" value="memory" />
-                <Picker.Item label="Shake" value="shake" />
+                <Picker.Item label="Math Problems" value="math" />
+                <Picker.Item label="Logic Puzzles" value="logic" />
+                <Picker.Item label="Memory Challenges" value="memory" />
+                <Picker.Item label="Word Games" value="word" />
+                <Picker.Item label="Pattern Recognition" value="pattern" />
+                <Picker.Item label="Riddles" value="riddles" />
+                <Picker.Item label="Quick Quizzes" value="trivia" />
               </Picker>
             </View>
 
