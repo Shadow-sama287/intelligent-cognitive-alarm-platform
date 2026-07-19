@@ -29,6 +29,8 @@ class VerifyAnswerResponse(BaseModel):
     session_cleared: bool
     time_expired: bool = False
     new_challenge: dict | None = None
+    status: str | None = None
+    time_penalty_seconds: int = 0
 
 @router.post("/verify", response_model=ResponseModel[VerifyAnswerResponse])
 def verify_challenge_answer(
@@ -97,7 +99,9 @@ def verify_challenge_answer(
                 attempts=0,
                 session_cleared=False,
                 time_expired=True,
-                new_challenge=challenge_payload
+                new_challenge=challenge_payload,
+                status=session["status"],
+                time_penalty_seconds=session.get("time_penalty_seconds", 0)
             )
         )
 
@@ -133,7 +137,8 @@ def verify_challenge_answer(
                 is_correct=True,
                 time_taken_seconds=solve_time,
                 attempts=session["attempts"],
-                session_cleared=True
+                session_cleared=True,
+                status=AlarmState.SOLVED.value
             )
         )
     else:
@@ -145,6 +150,7 @@ def verify_challenge_answer(
                 is_correct=False,
                 time_taken_seconds=solve_time,
                 attempts=session["attempts"],
-                session_cleared=False
+                session_cleared=False,
+                status=session["status"]
             )
         )

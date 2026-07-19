@@ -106,6 +106,7 @@ useEffect(() => {
     }
   };
   fetchAnalytics();
+  fetchAlarms();
 }, []);
 
   const handleCreate = async (e) => {

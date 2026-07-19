@@ -12,9 +12,12 @@ export const SnoozeSettingsPage = () => {
   const [snoozeLimit, setSnoozeLimit] = useState(3);
   const [escalateDifficulty, setEscalateDifficulty] = useState(true);
   const [timePenalty, setTimePenalty] = useState(true);
+  
+  const [initialSettings, setInitialSettings] = useState(null);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Load settings from backend
   useEffect(() => {
@@ -26,18 +29,32 @@ export const SnoozeSettingsPage = () => {
         setSnoozeLimit(data.snooze_limit);
         setEscalateDifficulty(data.escalate_difficulty);
         setTimePenalty(data.time_penalty_enabled);
+        
+        setInitialSettings({
+          snoozeLimit: data.snooze_limit,
+          escalateDifficulty: data.escalate_difficulty,
+          timePenalty: data.time_penalty_enabled,
+        });
       } catch (err) {
         console.error("Failed to fetch snooze settings", err);
+        setErrorMsg("Failed to load settings.");
       }
     };
 
     fetchSettings();
   }, []);
 
+  const hasChanges = initialSettings && (
+    snoozeLimit !== initialSettings.snoozeLimit ||
+    escalateDifficulty !== initialSettings.escalateDifficulty ||
+    timePenalty !== initialSettings.timePenalty
+  );
+
   // Save settings
   const handleSave = async () => {
     try {
       setSaving(true);
+      setErrorMsg("");
 
       await apiClient.put("/profile/snooze-settings", {
         snooze_limit: snoozeLimit,
@@ -45,6 +62,11 @@ export const SnoozeSettingsPage = () => {
         time_penalty_enabled: timePenalty,
       });
 
+      setInitialSettings({
+        snoozeLimit,
+        escalateDifficulty,
+        timePenalty,
+      });
       setSaved(true);
 
       setTimeout(() => {
@@ -52,6 +74,7 @@ export const SnoozeSettingsPage = () => {
       }, 2000);
     } catch (err) {
       console.error("Failed to save snooze settings", err);
+      setErrorMsg("Failed to save settings. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -69,6 +92,12 @@ export const SnoozeSettingsPage = () => {
           Configure wake-up enforcement and difficulty escalation rules.
         </p>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-50 text-red-600 border border-red-200 rounded-lg p-3 text-sm">
+          {errorMsg}
+        </div>
+      )}
 
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -91,6 +120,8 @@ export const SnoozeSettingsPage = () => {
             <option value={1}>1 Snooze</option>
             <option value={2}>2 Snoozes</option>
             <option value={3}>3 Snoozes</option>
+            <option value={4}>4 Snoozes</option>
+            <option value={5}>5 Snoozes</option>
           </select>
         </div>
 
@@ -141,8 +172,12 @@ export const SnoozeSettingsPage = () => {
 
       <button
         onClick={handleSave}
-        disabled={saving}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-lg flex justify-center items-center gap-2"
+        disabled={saving || (initialSettings !== null && !hasChanges)}
+        className={`w-full py-3 rounded-lg flex justify-center items-center gap-2 font-semibold transition-colors
+          ${(saving || (initialSettings !== null && !hasChanges))
+            ? "bg-indigo-300 text-white cursor-not-allowed"
+            : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
+          }`}
       >
         {saved ? (
           <>

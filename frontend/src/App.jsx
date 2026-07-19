@@ -7,7 +7,7 @@ import Practice from "./pages/Practice";
 import { AlarmsPage } from "./pages/Alarms";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-import { SnoozeSettingsPage } from "./pages/SnoozeSettings";
+
 
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -82,18 +82,7 @@ function App() {
             }
           />
 
-          {/* NEW ROUTE */}
-          <Route
-            path="/settings"
-            element={
-              <>
-                <Navbar />
-                <div className="max-w-7xl mx-auto p-4">
-                  <SnoozeSettingsPage />
-                </div>
-              </>
-            }
-          />
+
 
           <Route
             path="/admin"
