@@ -524,10 +524,13 @@ useEffect(() => {
                     handleChange("challenge_category", e.target.value)
                   }
                 >
-                  <option value="math">Math Challenge</option>
-                  <option value="memory">Memory Challenge</option>
-                  <option value="logic">Logic Puzzle</option>
-                  <option value="riddle">Riddle</option>
+                  <option value="math">Math Problems</option>
+                  <option value="logic">Logic Puzzles</option>
+                  <option value="memory">Memory Challenges</option>
+                  <option value="word">Word Games</option>
+                  <option value="pattern">Pattern Recognition</option>
+                  <option value="riddles">Riddles</option>
+                  <option value="trivia">Quick Quizzes</option>
                 </select>
               </div>
 
