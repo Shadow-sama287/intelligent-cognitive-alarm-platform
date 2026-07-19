@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
@@ -38,3 +38,8 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+class SnoozeSettingsUpdate(BaseModel):
+    snooze_limit: int = Field(default=3, ge=0, le=10, description="Max allowed snoozes")
+    escalate_difficulty: bool = True
+    time_penalty_enabled: bool = True

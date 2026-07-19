@@ -4,17 +4,11 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.user import User, UserProfile
-from app.schemas.user import UserProfileResponse, UserProfileUpdate
+from app.schemas.user import UserProfileResponse, UserProfileUpdate, SnoozeSettingsUpdate
 from app.schemas.common import ResponseModel
 from app.api.deps import get_current_user
 
 router = APIRouter()
-
-
-class SnoozeSettingsUpdate(BaseModel):
-    snooze_limit: int = 3
-    escalate_difficulty: bool = True
-    time_penalty_enabled: bool = True
 
 
 @router.get("", response_model=ResponseModel[UserProfileResponse])

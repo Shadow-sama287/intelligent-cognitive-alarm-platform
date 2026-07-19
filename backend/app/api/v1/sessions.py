@@ -61,5 +61,6 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
     
     return ResponseModel(message="Alarm session initialized", data={
         "session_id": session_id,
-        "challenge": challenge_payload
+        "challenge": challenge_payload,
+        "status": session_data["status"]
     })
