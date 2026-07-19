@@ -21,3 +21,35 @@ def get_random_challenge(
         raise HTTPException(status_code=404, detail="No cognitive challenges available")
         
     return ResponseModel(message="Challenge fetched successfully", data=challenge)
+
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.services.generators.llm_gen import llm_gen
+import uuid
+import logging
+
+logger = logging.getLogger(__name__)
+
+class GenerateChallengeRequest(BaseModel):
+    category: str
+    difficulty: str
+
+@router.post("/generate", response_model=ResponseModel[dict])
+def generate_practice_challenge(
+    payload: GenerateChallengeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        challenge = llm_gen.generate(
+            db=db,
+            user_id=str(current_user.id),
+            difficulty=payload.difficulty,
+            category=payload.category
+        )
+        challenge["_id"] = f"gen-{uuid.uuid4()}"
+        return ResponseModel(message="Dynamic challenge generated", data=challenge)
+    except Exception as e:
+        logger.error(f"Failed to generate practice challenge: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate challenge")

@@ -12,7 +12,7 @@ class LLMChallengeGenerator:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.model_name = "gemini-3.1-flash-lite"
-        self.categories = ["math", "memory", "logic", "vocabulary", "trivia", "riddles", "spatial"]
+        self.categories = ["math", "logic", "memory", "word", "pattern", "riddles", "trivia"]
 
     def generate(self, db: Session, user_id: str, difficulty: str = "medium", category: str = "math") -> dict:
         if category not in self.categories:
