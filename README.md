@@ -41,6 +41,24 @@ You should see `postgres`, `mongo`, and `redis` all with status `Up`.
 
 ---
 
+### 2.5 Run Database Migrations (Alembic)
+
+To apply the latest database schemas to your local PostgreSQL instance:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+> [!NOTE]
+> If you create new database models or modify existing ones, you must generate a new migration to update the database schema. Run these commands from the `backend/` directory:
+> ```bash
+> alembic revision --autogenerate -m "describe_your_changes_here"
+> alembic upgrade head
+> ```
+
+---
+
 ### 3. Start the Backend
 
 In the `backend/` directory:
@@ -78,7 +96,7 @@ The web app will be available at `http://localhost:5173`.
 
 ## 📱 Mobile App (Expo) — Additional Setup
 
-The Expo app connects to your backend over your local network. Because a physical phone is on your WiFi (not inside your PC), there are a few extra steps required every time.
+The Expo app connects to your backend over your local network. 
 
 ### Step 1 — Run uvicorn with `--host 0.0.0.0`
 
@@ -92,56 +110,19 @@ cd backend
 uvicorn app.main:app --reload --host 0.0.0.0
 ```
 
-### Step 2 — Find Your Machine's Local IP
+### Step 2 — Start Expo
 
-> [!IMPORTANT]
-> Your `.env` file **must be updated with your current local IP address every time** your IP changes (e.g., after reconnecting to WiFi or switching networks).
-
-Run this to find your IP:
-
-**Windows:**
-
-```powershell
-ipconfig
-```
-
-Look for the **IPv4 Address** under your **Wi-Fi adapter** (e.g., `192.168.1.5`).
-
-> [!WARNING]
-> Your machine may show multiple IPv4 addresses (e.g., one for WSL/Hyper-V like `172.x.x.x`, one for Wi-Fi like `192.168.x.x`).
-> **Always use the Wi-Fi IPv4 address.** The WSL/Hyper-V addresses (172.x.x.x) are internal virtual adapters — your phone cannot reach them over WiFi.
-
-**Mac/Linux:**
-
-```bash
-ifconfig | grep "inet " | grep -v 127.0.0.1
-```
-
-### Step 3 — Update `mobile/.env`
-
-Open `mobile/.env` and set your IP:
-
-```env
-EXPO_PUBLIC_API_URL=http://<YOUR_WIFI_IPV4>:8000/api/v1
-```
-
-Example:
-
-```env
-EXPO_PUBLIC_API_URL=http://192.168.1.5:8000/api/v1
-```
-
-> [!NOTE]
-> After editing `.env`, you must **fully restart Metro** (`Ctrl+C` then `npx expo start`) — environment variables are not hot-reloaded.
-
-### Step 4 — Start Expo
+We use `expo-constants` to dynamically detect your computer's local IP address. As long as your phone and PC are on the **same WiFi network**, the app will automatically route requests to your machine!
 
 ```bash
 cd mobile
 npx expo start
 ```
 
-Make sure your phone and PC are on the **same WiFi network**, then scan the QR code.
+Scan the QR code with the Expo Go app.
+
+> [!NOTE]
+> If the automatic IP detection fails for your specific network configuration, you can manually override it. Create a `.env` file in the `mobile` folder and set `EXPO_PUBLIC_API_URL=http://<YOUR_WIFI_IPV4>:8000/api/v1`. Then fully restart Expo.
 
 ---
 
