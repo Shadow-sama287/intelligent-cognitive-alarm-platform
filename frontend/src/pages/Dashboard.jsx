@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { apiClient } from "../api/client";
+import AdaptiveChart from "../components/charts/AdaptiveChart";
 
 const statusLabel = {
   true: "Active",
@@ -126,11 +127,14 @@ export default function Dashboard() {
             Active Alarms
           </p>
           <div className="flex items-end gap-2 mb-2">
-            <span className="text-4xl font-bold text-slate-900">{activeAlarmsCount}</span>
+            <span className="text-4xl font-bold text-slate-900">
+              {activeAlarmsCount}
+            </span>
             <span className="text-slate-500 text-sm mb-1">alarms</span>
           </div>
           <p className="text-xs text-slate-500">
-            You have {activeAlarmsCount} active alarm{activeAlarmsCount !== 1 ? "s" : ""} set
+            You have {activeAlarmsCount} active alarm
+            {activeAlarmsCount !== 1 ? "s" : ""} set
           </p>
           <div className="mt-4 w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
             <FaBell className="text-indigo-500" />
@@ -143,7 +147,9 @@ export default function Dashboard() {
             Challenges Solved
           </p>
           <div className="flex items-end gap-2 mb-2">
-            <span className="text-4xl font-bold text-slate-900">{history.length}</span>
+            <span className="text-4xl font-bold text-slate-900">
+              {history.length}
+            </span>
             <span className="text-slate-500 text-sm mb-1">total</span>
           </div>
           <p className="text-xs text-slate-500">
@@ -154,6 +160,10 @@ export default function Dashboard() {
           <div className="mt-4 w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
             <FaCheckCircle className="text-emerald-500" />
           </div>
+        </div>
+
+        <div>
+          <AdaptiveChart />
         </div>
 
         {/* Next Alarm */}
@@ -193,13 +203,17 @@ export default function Dashboard() {
                 >
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                      isActive ? "bg-indigo-50 text-indigo-500" : "bg-slate-100 text-slate-400"
+                      isActive
+                        ? "bg-indigo-50 text-indigo-500"
+                        : "bg-slate-100 text-slate-400"
                     }`}
                   >
                     <Icon />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-slate-900">{alarm.alarm_time}</h4>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      {alarm.alarm_time}
+                    </h4>
                     <p className="text-xs text-slate-500 capitalize">
                       {alarm.challenge_category} Challenge
                     </p>
@@ -220,7 +234,10 @@ export default function Dashboard() {
           ) : (
             <p className="text-slate-500 text-sm text-center py-6">
               No alarms found.{" "}
-              <Link to="/alarms" className="text-indigo-500 font-semibold hover:underline">
+              <Link
+                to="/alarms"
+                className="text-indigo-500 font-semibold hover:underline"
+              >
                 Create one!
               </Link>
             </p>
@@ -247,7 +264,10 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {history.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
+                  <tr
+                    key={entry.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
                     <td className="py-3 pr-4 text-slate-600 whitespace-nowrap">
                       {formatSolvedAt(entry.solved_at)}
                     </td>
@@ -257,7 +277,7 @@ export default function Dashboard() {
                     <td className="py-3 pr-4">
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${getDifficultyBadge(
-                          entry.difficulty
+                          entry.difficulty,
                         )}`}
                       >
                         {entry.difficulty}
@@ -268,7 +288,9 @@ export default function Dashboard() {
                         ? `${entry.time_taken_seconds}s`
                         : "—"}
                     </td>
-                    <td className="py-3 text-slate-600">{entry.attempts ?? "—"}</td>
+                    <td className="py-3 text-slate-600">
+                      {entry.attempts ?? "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -276,15 +298,16 @@ export default function Dashboard() {
           </div>
         ) : (
           <p className="text-slate-500 text-sm text-center py-6">
-            No challenge history yet. Solve an alarm challenge to see your performance data here.
+            No challenge history yet. Solve an alarm challenge to see your
+            performance data here.
           </p>
         )}
       </div>
 
       {/* Footer */}
       <footer className="text-center text-xs text-slate-400 flex items-center justify-center gap-2 py-4">
-        <FaBrain className="text-slate-400" />
-        © 2026 Intelligent Cognitive Alarm Platform
+        <FaBrain className="text-slate-400" />© 2026 Intelligent Cognitive Alarm
+        Platform
       </footer>
     </div>
   );
