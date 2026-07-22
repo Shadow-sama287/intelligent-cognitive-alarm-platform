@@ -14,6 +14,7 @@ from app.core.state_machine import AlarmStateMachine, AlarmState
 from app.services.evaluation_service import evaluator_service
 from app.services.generators.llm_gen import llm_gen
 from app.services.challenge_service import challenge_service
+from app.services.telemetry_service import telemetry_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -129,6 +130,15 @@ def verify_challenge_answer(
         )
         db.add(history_entry)
         db.commit()
+
+        telemetry_service.log_solve(
+            user_id=current_user.id,
+            category=session.get("category", "unknown"),
+            difficulty=session.get("difficulty", "medium"),
+            solve_time=solve_time,
+            attempts=session["attempts"],
+            snooze_count=session.get("snooze_count", 0)
+        )
 
         redis_client.delete_session(payload.session_id)  # Alarm dismissed!
         return ResponseModel(

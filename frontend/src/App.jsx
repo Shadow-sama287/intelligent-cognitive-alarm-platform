@@ -7,7 +7,7 @@ import Practice from "./pages/Practice";
 import { AlarmsPage } from "./pages/Alarms";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
-
+import { AnalyticsPage } from "./pages/Analytics";
 
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -37,12 +37,20 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+          }
         />
 
         <Route
           path="/register"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Register />
+            )
+          }
         />
 
         <Route element={<ProtectedRoute />}>
@@ -82,8 +90,6 @@ function App() {
             }
           />
 
-
-
           <Route
             path="/admin"
             element={
@@ -97,9 +103,13 @@ function App() {
           />
         </Route>
 
+        <Route path="/analytics" element={<AnalyticsPage />} />
+
         <Route
           path="*"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
+          element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          }
         />
       </Routes>
     </BrowserRouter>
