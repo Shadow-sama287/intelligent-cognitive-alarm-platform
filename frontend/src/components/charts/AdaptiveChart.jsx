@@ -50,7 +50,8 @@ export const AdaptiveChart = () => {
         </div>
         {isLoading ? (
           <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" /> Loading...
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" />{" "}
+            Loading...
           </div>
         ) : (
           <span
@@ -73,7 +74,7 @@ export const AdaptiveChart = () => {
         </div>
         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-amber-500 rounded-full transition-all duration-500"
+            className="h-full bg-linear-to-r from-indigo-500 to-amber-500 rounded-full transition-all duration-500"
             style={{ width: `${efficiencyScore}%` }}
           />
         </div>
@@ -83,7 +84,8 @@ export const AdaptiveChart = () => {
       <p className="text-xs text-slate-500 flex items-center gap-1.5 pt-1">
         <TrendingUp className="w-4 h-4 text-emerald-500 shrink-0" />
         <span>
-          AI automatically scaled your puzzle level based on recent solve times.
+          Automatically scaling your difficulty level based on recent solve
+          times.
         </span>
       </p>
     </div>
