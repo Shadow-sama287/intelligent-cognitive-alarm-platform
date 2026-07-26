@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta, time
 from uuid import UUID
+from zoneinfo import ZoneInfo
 import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
@@ -7,8 +8,14 @@ from app.db.session import SessionLocal
 from app.models.telemetry import SolveTelemetry
 from app.models.challenge_history import UserChallengeHistory
 from app.models.alarm import Alarm
+from app.models.user import UserProfile
 
 class HabitScoringService:
+    @staticmethod
+    def get_user_timezone(db: Session, user_id: UUID) -> str:
+        profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+        return profile.time_zone if profile and profile.time_zone else "UTC"
+
     @staticmethod
     def calculate_streak_days(db: Session, user_id: UUID) -> int:
         """
@@ -48,9 +55,14 @@ class HabitScoringService:
     def calculate_wake_up_consistency(db: Session, user_id: UUID) -> float:
         """
         Calculates wake-up consistency percentage by comparing scheduled alarm times
-        against actual solve timestamps.
+        against actual solve timestamps, converted to the user's local timezone.
         """
-        # Fetch active user alarms
+        user_tz_str = HabitScoringService.get_user_timezone(db, user_id)
+        try:
+            user_tz = ZoneInfo(user_tz_str)
+        except Exception:
+            user_tz = ZoneInfo("UTC")
+
         active_alarms = db.query(Alarm).filter(
             Alarm.user_id == user_id,
             Alarm.is_active == True
@@ -85,10 +97,13 @@ class HabitScoringService:
 
         variances = []
         for solve in solves:
-            solve_time = solve.solved_at.time()
-            solve_minutes = solve_time.hour * 60 + solve_time.minute
+            # Convert UTC solved_at timestamp to the user's local timezone
+            utc_dt = solve.solved_at.replace(tzinfo=ZoneInfo("UTC"))
+            local_dt = utc_dt.astimezone(user_tz)
+
+            solve_minutes = local_dt.hour * 60 + local_dt.minute
             diff = abs(solve_minutes - avg_target_minutes)
-            
+
             # Penalize variance
             if diff <= 10:
                 score = 100.0
@@ -134,7 +149,7 @@ class HabitScoringService:
             total_challenges = db.query(UserChallengeHistory).filter(
                 UserChallengeHistory.user_id == str(user_id)
             ).count()
-            
+
             if total_challenges > 0:
                 challenge_success = min(100.0, 50.0 + (total_challenges * 5.0))
             else:
@@ -144,16 +159,15 @@ class HabitScoringService:
             avg_snoozes = db.query(func.avg(SolveTelemetry.snooze_count)).filter(
                 SolveTelemetry.user_id == user_id
             ).scalar()
-            
+
             if avg_snoozes is not None:
                 snooze_reduction = max(0.0, 100.0 - (float(avg_snoozes) * 25))
             else:
-                snooze_reduction = 100.0 
+                snooze_reduction = 100.0
 
             # 4. Real Dynamic Sleep Schedule Adherence (20%)
             sleep_adherence = HabitScoringService.calculate_sleep_adherence(db, user_id)
 
-            # Dynamic Streak Days Calculation
             streak_days = HabitScoringService.calculate_streak_days(db, user_id)
 
             # Final Weighted Calculation
