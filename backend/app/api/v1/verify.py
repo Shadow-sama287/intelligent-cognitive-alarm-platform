@@ -15,6 +15,7 @@ from app.services.evaluation_service import evaluator_service
 from app.services.generators.llm_gen import llm_gen
 from app.services.challenge_service import challenge_service
 from app.services.telemetry_service import telemetry_service
+from app.services.progression_service import progression_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -139,7 +140,11 @@ def verify_challenge_answer(
             attempts=session["attempts"],
             snooze_count=session.get("snooze_count", 0)
         )
-
+        # Adaptive difficulty progression
+        new_diff = progression_service.evaluate_and_update_user_difficulty(
+    db,
+    current_user.id
+)
         redis_client.delete_session(payload.session_id)  # Alarm dismissed!
         return ResponseModel(
             message="Challenge solved successfully! Alarm dismissed.",
