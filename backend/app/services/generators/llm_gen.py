@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -10,9 +11,17 @@ from app.models.challenge_history import UserChallengeHistory
 
 class LLMChallengeGenerator:
     def __init__(self):
-        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.client: Optional[object] = None
         self.model_name = "gemini-3.1-flash-lite"
         self.categories = ["math", "logic", "memory", "word", "pattern", "riddles", "trivia"]
+
+    def _get_client(self):
+        if self.client is None:
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY is not configured")
+            self.client = genai.Client(api_key=api_key)
+        return self.client
 
     def generate(self, db: Session, user_id: str, difficulty: str = "medium", category: str = "math") -> dict:
         if category not in self.categories:
@@ -36,7 +45,8 @@ class LLMChallengeGenerator:
         For 'memory', provide a sequence of items to remember. For 'spatial', provide a mental rotation or direction puzzle.
         """
 
-        response = self.client.models.generate_content(
+        client = self._get_client()
+        response = client.models.generate_content(
             model=self.model_name,
             contents=prompt,
             config=types.GenerateContentConfig(

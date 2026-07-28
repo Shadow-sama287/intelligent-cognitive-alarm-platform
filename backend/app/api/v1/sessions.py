@@ -11,6 +11,7 @@ from app.services.generators.llm_gen import llm_gen
 from app.schemas.common import ResponseModel
 from app.api.deps import get_current_user
 from app.models.user import User
+from app.services.generators.fallback_gen import fallback_gen
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -28,10 +29,22 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         logger.error(f"Failed to generate challenge via LLM: {e}")
         
     if not challenge:
-        challenge = challenge_service.get_random_challenge(category=category, difficulty=difficulty)
-    
+        challenge = challenge_service.get_random_challenge(
+        category=category,
+        difficulty=difficulty
+    )
+
     if not challenge:
-        raise HTTPException(status_code=404, detail="No available challenges for this category")
+        logger.warning(
+        "LLM and database challenge generation failed. Using fallback generator."
+    )
+
+    challenge = fallback_gen.generate_math(
+        difficulty=difficulty
+    )
+
+    challenge["_id"] = f"fallback-{uuid.uuid4()}"
+    
 
     # Enforce valid state transition
     AlarmStateMachine.transition(AlarmState.IDLE, AlarmState.RINGING)
