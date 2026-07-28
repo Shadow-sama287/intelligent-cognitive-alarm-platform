@@ -1,28 +1,62 @@
-import React, { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect } from "react";
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native";
+import { Audio } from "expo-av";
 import { mobileApi } from "../services/api";
 
-export default function RingerScreen({
-  visible,
-  sessionData,
-  onDismissSuccess,
-}) {
+export default function RingerScreen({ visible, sessionData, onDismissSuccess }) {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sound, setSound] = useState(null);
 
-  // Don't render until session data is available
+  // Play alarm sound on modal open, stop sound on dismiss
+  useEffect(() => {
+    let soundObject = null;
+
+    async function playAlarmSound() {
+      if (visible) {
+        try {
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            shouldDuckAndroid: true,
+          });
+
+          const { sound: newSound } = await Audio.Sound.createAsync(
+            { uri: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" }, // Standard Alarm SFX
+            { shouldPlay: true, isLooping: true, volume: 1.0 }
+          );
+
+          soundObject = newSound;
+          setSound(newSound);
+        } catch (error) {
+          console.error("Failed to load or play alarm sound:", error);
+        }
+      }
+    }
+
+    playAlarmSound();
+
+    return () => {
+      if (soundObject) {
+        soundObject.stopAsync();
+        soundObject.unloadAsync();
+      }
+    };
+  }, [visible]);
+
+  const stopSound = async () => {
+    if (sound) {
+      try {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      } catch (e) {
+        console.error("Error stopping sound:", e);
+      }
+    }
+  };
+
   if (!sessionData) return null;
-
   const challenge = sessionData.challenge;
+
   const handleSubmit = async () => {
     if (!answer.trim()) {
       Alert.alert("Validation", "Please enter your answer.");
@@ -31,7 +65,6 @@ export default function RingerScreen({
 
     try {
       setLoading(true);
-
       const response = await mobileApi.post("/challenges/verify", {
         session_id: sessionData.session_id,
         user_answer: answer.trim(),
@@ -40,52 +73,36 @@ export default function RingerScreen({
       const result = response.data.data;
 
       if (result.is_correct) {
+        await stopSound(); // Stop ringing sound on correct answer
+
         Alert.alert(
           "Alarm Dismissed!",
           `Great job! Solved in ${result.time_taken_seconds} seconds.`
         );
 
         setAnswer("");
-
         if (onDismissSuccess) {
           onDismissSuccess();
         }
       } else {
         setAnswer("");
-
-        Alert.alert(
-          "Incorrect",
-          "Wrong answer! Alarm keeps ringing!"
-        );
+        Alert.alert("Incorrect", "Wrong answer! Alarm keeps ringing!");
       }
     } catch (error) {
       console.error(error.response?.data || error);
-
-      Alert.alert(
-  "Verification Failed",
-  error.response?.data?.detail ||
-  "Unable to verify your answer."
-);
+      Alert.alert("Verification Failed", error.response?.data?.detail || "Unable to verify answer.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal
-  visible={visible}
-  animationType="slide"
-  transparent={false}
-  onRequestClose={() => {}}
->
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={() => {}}>
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <Text style={styles.title}>⏰ Wake Up!</Text>
-
-          <Text style={styles.subtitle}>
-            Solve the challenge to dismiss the alarm
-          </Text>
-
+          <Text style={styles.subtitle}>Solve the challenge to dismiss the alarm</Text>
+          
           <View style={styles.challengeBox}>
             <Text style={styles.challengeText}>
               {challenge?.prompt || "Loading challenge..."}
@@ -102,16 +119,11 @@ export default function RingerScreen({
           />
 
           <TouchableOpacity
-            style={[
-              styles.button,
-              loading && { opacity: 0.7 },
-            ]}
+            style={[styles.button, loading && { opacity: 0.7 }]}
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Verifying..." : "Submit"}
-            </Text>
+            <Text style={styles.buttonText}>{loading ? "Verifying..." : "Submit"}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -120,68 +132,13 @@ export default function RingerScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-    justifyContent: "center",
-  },
-
-  content: {
-    padding: 24,
-    alignItems: "center",
-  },
-
-  title: {
-    fontSize: 34,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 40,
-  },
-
-  challengeBox: {
-    width: "100%",
-    padding: 25,
-    borderRadius: 16,
-    backgroundColor: "#ffffff",
-    elevation: 3,
-    marginBottom: 30,
-  },
-
-  challengeText: {
-    fontSize: 28,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 22,
-    textAlign: "center",
-    backgroundColor: "#fff",
-    marginBottom: 30,
-  },
-
-  button: {
-    width: "100%",
-    backgroundColor: "#2563EB",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
+  container: { flex: 1, backgroundColor: "#F8FAFC", justifyContent: "center" },
+  content: { padding: 24, alignItems: "center" },
+  title: { fontSize: 34, fontWeight: "bold", marginBottom: 10 },
+  subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 40 },
+  challengeBox: { width: "100%", padding: 25, borderRadius: 16, backgroundColor: "#fff", elevation: 3, marginBottom: 30 },
+  challengeText: { fontSize: 28, fontWeight: "600", textAlign: "center" },
+  input: { width: "100%", borderWidth: 1, borderColor: "#ccc", borderRadius: 12, padding: 15, fontSize: 22, textAlign: "center", backgroundColor: "#fff", marginBottom: 30 },
+  button: { width: "100%", backgroundColor: "#2563EB", padding: 16, borderRadius: 12, alignItems: "center" },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 18 },
 });
