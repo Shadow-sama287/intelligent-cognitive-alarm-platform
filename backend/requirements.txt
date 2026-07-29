@@ -44,3 +44,8 @@ python-multipart>=0.0.9
 
 # Migrations
 alembic>=1.13.1
+
+# Reporting
+pandas>=2.2.0
+openpyxl>=3.1.2
+reportlab>=4.1.0

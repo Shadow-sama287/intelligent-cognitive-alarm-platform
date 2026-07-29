@@ -14,6 +14,7 @@ from app.api.v1.performance import router as performance_router
 from app.api.v1.ml import router as ml_router
 from app.api.v1.telemetry import router as telemetry_router
 from app.api.v1.analytics import router as analytics_router
+from app.api.v1.reports import router as reports_router
 from app.db.session import engine, Base
 # Ensure models are imported so SQLAlchemy metadata is populated
 from app.db import base as _models
@@ -45,6 +46,7 @@ app.include_router(performance_router, prefix=f"{settings.API_V1_STR}/performanc
 app.include_router(ml_router, prefix=f"{settings.API_V1_STR}/ml", tags=["ML Engine"])
 app.include_router(telemetry_router, prefix=f"{settings.API_V1_STR}/telemetry", tags=["Telemetry"])
 app.include_router(analytics_router, prefix=f"{settings.API_V1_STR}/analytics", tags=["Analytics"])
+app.include_router(reports_router, prefix=f"{settings.API_V1_STR}/reports", tags=["Reports"])
 
 @app.get("/")
 def root():
