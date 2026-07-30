@@ -8,6 +8,7 @@ import { AlarmsPage } from "./pages/Alarms";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import { AnalyticsPage } from "./pages/Analytics";
+import { CoachDashboard } from "./pages/CoachDashboard";
 
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -101,6 +102,17 @@ function App() {
               </>
             }
           />
+          <Route
+  path="/coach"
+  element={
+    <>
+      <Navbar />
+      <div className="max-w-7xl mx-auto p-4">
+        <CoachDashboard />
+      </div>
+    </>
+  }
+/>
         </Route>
 
         <Route path="/analytics" element={<AnalyticsPage />} />
