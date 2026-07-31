@@ -115,3 +115,17 @@ def update_snooze_settings(
             "time_penalty_enabled": profile.time_penalty_enabled,
         },
     )
+
+
+@router.post("/fcm-token")
+async def update_fcm_token(
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    token = payload.get("fcm_token")
+    if not token:
+        raise HTTPException(status_code=400, detail="fcm_token required")
+    current_user.profile.fcm_token = token
+    db.commit()
+    return {"status": "success", "message": "FCM token updated successfully"}

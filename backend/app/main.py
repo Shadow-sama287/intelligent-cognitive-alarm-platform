@@ -16,6 +16,7 @@ from app.api.v1.telemetry import router as telemetry_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.reports import router as reports_router
 from app.db.session import engine, Base
+from app.services.scheduler import start_scheduler
 # Ensure models are imported so SQLAlchemy metadata is populated
 from app.db import base as _models
 
@@ -57,3 +58,5 @@ def root():
 def on_startup():
     # Create DB tables if they don't exist (development convenience)
     Base.metadata.create_all(bind=engine)
+    # Start background APScheduler engine
+    start_scheduler()
