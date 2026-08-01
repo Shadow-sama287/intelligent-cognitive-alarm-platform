@@ -19,6 +19,7 @@ class UserProfileResponse(BaseModel):
     time_zone: str
     difficulty_preference: str
     productivity_goals: Optional[str] = None
+    fcm_token: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -29,6 +30,7 @@ class UserProfileUpdate(BaseModel):
     time_zone: Optional[str] = None
     difficulty_preference: Optional[str] = None
     productivity_goals: Optional[str] = None
+    fcm_token: Optional[str] = None
 
 class UserResponse(UserBase):
     id: UUID
@@ -42,4 +44,4 @@ class UserResponse(UserBase):
 class SnoozeSettingsUpdate(BaseModel):
     snooze_limit: int = Field(default=3, ge=0, le=10, description="Max allowed snoozes")
     escalate_difficulty: bool = True
-    time_penalty_enabled: bool = True
+    time_penalty_enabled: bool = True

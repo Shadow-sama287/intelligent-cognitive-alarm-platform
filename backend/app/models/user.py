@@ -1,6 +1,7 @@
 import enum
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import (
     String,
@@ -129,6 +130,11 @@ class UserProfile(Base):
     time_penalty_enabled: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+    )
+
+    fcm_token: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
     )
 
     user: Mapped["User"] = relationship(

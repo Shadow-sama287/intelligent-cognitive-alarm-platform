@@ -17,3 +17,5 @@ htmlcov/
 # Local database artifacts
 *.db
 
+# Firebase Private Key
+firebase-credentials.json
