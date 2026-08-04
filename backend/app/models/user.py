@@ -20,6 +20,7 @@ from app.db.session import Base
 class Role(str, enum.Enum):
     USER = "user"
     ADMIN = "administrator"
+    COACH = "coach"
 
 
 class User(Base):
@@ -140,4 +141,28 @@ class UserProfile(Base):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="profile",
+    )
+    
+class CoachClient(Base):
+    __tablename__ = "coach_clients"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    coach_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
     )
