@@ -3,19 +3,25 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.telemetry import SolveTelemetry
 
+from typing import Optional
+from datetime import datetime
+
 class TelemetryService:
     @staticmethod
-    def log_solve(user_id: UUID, category: str, difficulty: str, solve_time: float, attempts: int, snooze_count: int):
+    def log_solve(user_id: UUID, category: str, difficulty: str, solve_time: float, attempts: int, snooze_count: int, created_at: Optional[datetime] = None):
         db: Session = SessionLocal()
         try:
-            entry = SolveTelemetry(
-                user_id=user_id,
-                category=category,
-                difficulty=difficulty,
-                solve_time_seconds=solve_time,
-                attempts=attempts,
-                snooze_count=snooze_count
-            )
+            kwargs = {
+                "user_id": user_id,
+                "category": category,
+                "difficulty": difficulty,
+                "solve_time_seconds": solve_time,
+                "attempts": attempts,
+                "snooze_count": snooze_count
+            }
+            if created_at is not None:
+                kwargs["created_at"] = created_at
+            entry = SolveTelemetry(**kwargs)
             db.add(entry)
             db.commit()
         finally:

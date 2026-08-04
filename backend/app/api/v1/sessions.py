@@ -30,20 +30,18 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         
     if not challenge:
         challenge = challenge_service.get_random_challenge(
-        category=category,
-        difficulty=difficulty
-    )
+            category=category,
+            difficulty=difficulty
+        )
 
     if not challenge:
         logger.warning(
-        "LLM and database challenge generation failed. Using fallback generator."
-    )
-
-    challenge = fallback_gen.generate_math(
-        difficulty=difficulty
-    )
-
-    challenge["_id"] = f"fallback-{uuid.uuid4()}"
+            "LLM and database challenge generation failed. Using fallback generator."
+        )
+        challenge = fallback_gen.generate_math(
+            difficulty=difficulty
+        )
+        challenge["_id"] = f"fallback-{uuid.uuid4()}"
     
 
     # Enforce valid state transition

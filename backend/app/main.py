@@ -58,5 +58,6 @@ def root():
 def on_startup():
     # Create DB tables if they don't exist (development convenience)
     Base.metadata.create_all(bind=engine)
-    # Start background APScheduler engine
-    start_scheduler()
+    # Background APScheduler paused for clean console logging (FCM code retained)
+    # start_scheduler()
+
