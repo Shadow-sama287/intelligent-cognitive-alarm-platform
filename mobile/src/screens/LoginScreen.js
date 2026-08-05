@@ -20,10 +20,16 @@ export default function LoginScreen({ navigation }) {
       
       navigation.replace("Main");
     } catch (error) {
-      const errorMessage = error.response?.data?.detail 
+      const targetUrl = (error.config?.baseURL || '') + (error.config?.url || '/auth/login');
+      const errorMsg = error.response?.data?.detail 
         || error.message 
-        || "Invalid credentials";
-      Alert.alert("Login Failed", errorMessage);
+        || "Network / Credentials error";
+
+      console.error(`[Login Failed] Target: ${targetUrl}`, error);
+      Alert.alert(
+        "Login Failed",
+        `Target URL:\n${targetUrl}\n\nDetails:\n${errorMsg}`
+      );
     }
   };
 

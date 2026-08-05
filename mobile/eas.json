@@ -7,7 +7,8 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_DOCTOR_ENABLE": "0"
+        "EXPO_DOCTOR_ENABLE": "0",
+        "EXPO_PUBLIC_API_URL": "http://192.168.1.7:8000/api/v1"
       },
       "android": {
         "buildType": "apk"
@@ -16,7 +17,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_DOCTOR_ENABLE": "0"
+        "EXPO_DOCTOR_ENABLE": "0",
+        "EXPO_PUBLIC_API_URL": "http://192.168.1.7:8000/api/v1"
       },
       "android": {
         "buildType": "apk"
