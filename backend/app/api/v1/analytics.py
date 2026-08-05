@@ -5,6 +5,7 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.services.habit_service import habit_service
 from app.ml.recommendation_engine import recommendation_engine
+from app.services.telemetry_service import telemetry_service
 import json
 
 router = APIRouter()
@@ -23,7 +24,15 @@ def get_recommendations(current_user: User = Depends(get_current_user)):
         return ResponseModel(message="Cached recommendations fetched", data=json.loads(cached))
 
     score_data = habit_service.calculate_habit_score(current_user.id)
-    recommendations = recommendation_engine.generate_recommendations(score_data)
+    history = telemetry_service.get_user_solve_history(
+    current_user.id,
+    limit=10
+    )
+
+    recommendations = recommendation_engine.generate_recommendations(
+        score_data,
+        history
+    )
 
     # Cache for 1 hour
     redis_client.r.setex(cache_key, 3600, json.dumps(recommendations))
