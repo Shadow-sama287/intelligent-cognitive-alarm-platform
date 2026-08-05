@@ -1,10 +1,24 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaBrain, FaHome, FaUserCircle, FaCog, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaBrain,
+  FaHome,
+  FaUserCircle,
+  FaSignOutAlt,
+  FaClock,
+  FaChartLine,
+  FaUserFriends,
+  FaMoon,
+  FaSun,
+} from "react-icons/fa";
+
 import { useAuthStore } from "../../store/useAuthStore";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const logout = useAuthStore(state => state.logout);
+  const logout = useAuthStore((state) => state.logout);
+
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -25,10 +39,40 @@ export default function Navbar() {
         <Link to="/dashboard" className="navbar-link">
           <FaHome /> Dashboard
         </Link>
+
+        <Link to="/alarms" className="navbar-link">
+          <FaClock /> Alarms
+        </Link>
+
+        <Link to="/practice" className="navbar-link">
+          <FaBrain /> Practice
+        </Link>
+
+        <Link to="/analytics" className="navbar-link">
+          <FaChartLine /> Analytics
+        </Link>
+
+        <Link to="/coach" className="navbar-link">
+          <FaUserFriends /> Coach
+        </Link>
+
         <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile
         </Link>
-        <button type="button" className="navbar-logout" onClick={handleLogout}>
+
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+        >
+          {theme === "dark" ? <FaSun /> : <FaMoon />}
+        </button>
+
+        <button
+          type="button"
+          className="navbar-logout"
+          onClick={handleLogout}
+        >
           <FaSignOutAlt /> Logout
         </button>
       </nav>
