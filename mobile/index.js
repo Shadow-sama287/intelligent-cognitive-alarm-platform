@@ -17,20 +17,13 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
     type === EventType.PRESS ||
     type === EventType.ACTION_PRESS;
 
-  // When alarm triggers in background, start a Redis session for the challenge
+  // Background session creation removed to prevent duplicate sessions.
+  // GlobalAlarmManager handles session creation when the user interacts with or sees the alarm UI.
   if (isAlarmTriggerEvent && notification?.data?.alarm_id) {
-    try {
-      await startRedisSessionForAlarm(
-        notification.data.alarm_id,
-        notification.data.category || 'math',
-      );
-      console.log(
-        '[Notifee Background] Created Redis session for alarm:',
-        notification.data.alarm_id,
-      );
-    } catch (e) {
-      console.error('[Notifee Background] Failed to create Redis session:', e);
-    }
+    console.log(
+      '[Notifee Background] Alarm triggered in background:',
+      notification.data.alarm_id,
+    );
   }
 
   // Handle user tapping notification or action buttons
@@ -38,7 +31,9 @@ notifee.onBackgroundEvent(async ({ type, detail }) => {
   if (isPressEvent && notification?.id) {
     try {
       await notifee.cancelNotification(notification.id);
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Notifee Background] Failed to cancel notification:', e);
+    }
   }
 });
 

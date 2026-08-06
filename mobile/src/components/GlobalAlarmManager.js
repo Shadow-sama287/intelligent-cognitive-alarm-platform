@@ -8,11 +8,13 @@ import {
   cancelNotificationById,
   cancelAllDisplayedNotifications,
 } from "../services/notificationService";
+import { generateLocalChallenge } from "../services/localChallengeEngine";
 
 export default function GlobalAlarmManager({ children }) {
   const [ringerVisible, setRingerVisible] = useState(false);
   const [sessionData, setSessionData] = useState(null);
   const soundRef = useRef(null);
+  const isRinging = useRef(false);
 
   // Helper to start looping alarm ringtone audio
   const startRingtone = async () => {
@@ -59,6 +61,11 @@ export default function GlobalAlarmManager({ children }) {
     const notificationId = notification?.id;
 
     if (!alarmId) return;
+    if (isRinging.current) {
+      console.log(`[GlobalAlarmManager] Alarm ${alarmId} already ringing, ignoring duplicate trigger.`);
+      return;
+    }
+    isRinging.current = true;
 
     console.log(`[GlobalAlarmManager] Processing alarm trigger for alarm_id: ${alarmId}`);
 
@@ -71,20 +78,18 @@ export default function GlobalAlarmManager({ children }) {
     await startRingtone();
 
     // 2. Fetch backend challenge session, or generate fallback if offline/backend fails
-    let session = null;
+    let session;
+    const category = notification?.data?.category || "math";
     try {
-      session = await startRedisSessionForAlarm(
-        alarmId,
-        notification?.data?.category || "math"
-      );
+      session = await startRedisSessionForAlarm(alarmId, category);
     } catch (error) {
-      console.warn("[GlobalAlarmManager] Backend session start failed, using fallback challenge:", error);
+      console.log('[GlobalAlarmManager] Falling back to local challenge due to backend error');
+      const localChallenge = generateLocalChallenge(category, 'medium');
       session = {
-        session_id: `offline-${Date.now()}`,
+        session_id: `local-session-${Date.now()}`,
+        is_local: true,
         alarm_id: alarmId,
-        challenge: {
-          prompt: "12 + 15 = ?",
-        },
+        challenge: localChallenge,
       };
     }
 
@@ -100,7 +105,7 @@ export default function GlobalAlarmManager({ children }) {
         console.log("[GlobalAlarmManager] App opened from initial notification");
         await handleAlarmTrigger(initial.notification, true);
       }
-    });
+    }).catch(console.error);
 
     // 2. Listen for foreground notification events (when app is open or opened via full-screen intent)
     const unsubscribe = notifee.onForegroundEvent(async ({ type, detail }) => {
@@ -128,6 +133,7 @@ export default function GlobalAlarmManager({ children }) {
     console.log("[GlobalAlarmManager] Alarm solved and dismissed");
     await stopRingtone();
     await cancelAllDisplayedNotifications();
+    isRinging.current = false;
     setRingerVisible(false);
     setSessionData(null);
   };

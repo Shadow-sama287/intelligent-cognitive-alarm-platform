@@ -64,6 +64,7 @@ function getNextTriggerTimestamp(alarmTimeStr) {
   if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
 
   const [hours, minutes] = parts;
+  if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
   const now = new Date();
   const trigger = new Date();
   trigger.setHours(hours, minutes, 0, 0);
@@ -154,6 +155,7 @@ export async function scheduleLocalAlarmNotification(alarm) {
     return notificationId;
   } catch (error) {
     console.error(`[Notifee] Error scheduling alarm ${alarm.id}:`, error);
+    throw error;
   }
 }
 
@@ -206,11 +208,8 @@ export async function syncAllAlarms(alarmsList) {
   if (!Array.isArray(alarmsList)) return;
 
   try {
-    // Cancel all existing scheduled triggers
-    const triggerNotificationIds = await notifee.getTriggerNotificationIds();
-    for (const id of triggerNotificationIds) {
-      await notifee.cancelNotification(id);
-    }
+    // Cancel all existing scheduled triggers safely
+    await notifee.cancelTriggerNotifications();
 
     // Re-schedule only active alarms
     for (const alarm of alarmsList) {
@@ -302,15 +301,13 @@ export async function startRedisSessionForAlarm(alarmId, category = 'math') {
       },
       timeout: 3000,
     });
-    return res.data.data;
-  } catch (error) {
-    console.log('[NotificationService] Server session creation failed/offline. Falling back to local challenge:', error?.message);
-    const { generateLocalChallenge } = require('./localChallengeEngine');
-    const localChallenge = generateLocalChallenge(category, 'medium');
     return {
-      session_id: `local-session-${Date.now()}`,
-      is_local: true,
-      challenge: localChallenge,
+      ...res.data.data,
+      alarm_id: alarmId,
+      is_local: false,
     };
+  } catch (error) {
+    console.log('[NotificationService] Server session creation failed/offline:', error?.message);
+    throw error;
   }
 }

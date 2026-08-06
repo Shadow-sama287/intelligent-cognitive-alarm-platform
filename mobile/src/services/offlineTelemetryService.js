@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mobileApi } from './api';
 
 const OFFLINE_QUEUE_KEY = '@icap_offline_telemetry_queue_v1';
+let isSyncing = false;
 
 /**
  * Saves a solve telemetry event locally when offline.
@@ -12,6 +13,7 @@ export async function queueOfflineTelemetry(data) {
     const queue = existing ? JSON.parse(existing) : [];
 
     const record = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       category: data.category || 'math',
       difficulty: data.difficulty || 'medium',
       solve_time_seconds: data.solve_time_seconds || 10,
@@ -47,6 +49,11 @@ export async function getPendingTelemetryQueue() {
  * Flushes queue upon 200 OK server response.
  */
 export async function syncOfflineTelemetry() {
+  if (isSyncing) {
+    console.log('[Offline Telemetry] Sync already in progress, skipping duplicate call.');
+    return 0;
+  }
+  isSyncing = true;
   try {
     const queue = await getPendingTelemetryQueue();
     if (!queue || queue.length === 0) return 0;
@@ -63,5 +70,7 @@ export async function syncOfflineTelemetry() {
   } catch (error) {
     console.warn('[Offline Telemetry] Sync deferred (network unavailable or auth pending):', error?.message || error);
     return 0;
+  } finally {
+    isSyncing = false;
   }
 }
