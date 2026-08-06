@@ -12,6 +12,8 @@ from app.schemas.common import ResponseModel
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.services.generators.fallback_gen import fallback_gen
+from app.ml.dda_engine import dda_engine
+from app.services.telemetry_service import telemetry_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -19,8 +21,19 @@ router = APIRouter()
 @router.post("/start", response_model=ResponseModel[dict])
 def start_alarm_session(alarm_id: str, category: str = "math", current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session_id = str(uuid.uuid4())
-    difficulty = current_user.profile.difficulty_preference.lower() if current_user.profile else "medium"
-    
+    history = telemetry_service.get_user_solve_history(
+    current_user.id,
+    limit=5
+)
+
+    if history:
+        difficulty = dda_engine.predict_next_difficulty(history)
+    else:
+        difficulty = (
+            current_user.profile.difficulty_preference.lower()
+            if current_user.profile
+            else "medium"
+        )
     challenge = None
     try:
         challenge = llm_gen.generate(db=db, user_id=str(current_user.id), difficulty=difficulty, category=category)
@@ -39,12 +52,25 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         "LLM and database challenge generation failed. Using fallback generator."
     )
 
-    challenge = fallback_gen.generate_math(
-        difficulty=difficulty
-    )
+        if category == "math":
+            challenge = fallback_gen.generate_math(difficulty)
+        elif category == "logic":
+            challenge = fallback_gen.generate_logic(difficulty)
+        elif category == "memory":
+            challenge = fallback_gen.generate_memory(difficulty)
+        elif category == "stroop":
+            challenge = fallback_gen.generate_stroop(difficulty)
+        elif category == "pattern":
+            challenge = fallback_gen.generate_pattern(difficulty)
+        elif category == "riddles":
+            challenge = fallback_gen.generate_riddles(difficulty)
+        elif category == "trivia":
+            challenge = fallback_gen.generate_trivia(difficulty)
+        else:
+            challenge = fallback_gen.generate_math(difficulty)
 
-    challenge["_id"] = f"fallback-{uuid.uuid4()}"
-    
+        challenge["_id"] = f"fallback-{uuid.uuid4()}"
+
 
     # Enforce valid state transition
     AlarmStateMachine.transition(AlarmState.IDLE, AlarmState.RINGING)
@@ -71,7 +97,7 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
 
     # Sanitize payload sent to frontend (remove answer)
     challenge_payload = {k: v for k, v in challenge.items() if k != "correct_answer"}
-    
+
     return ResponseModel(message="Alarm session initialized", data={
         "session_id": session_id,
         "challenge": challenge_payload,
