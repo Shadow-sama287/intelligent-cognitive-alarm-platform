@@ -70,17 +70,20 @@ export default function Dashboard() {
   const [alarms, setAlarms] = useState([]);
   const [history, setHistory] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
+  const [coachAdvice, setCoachAdvice] = useState([]);
 
   const fetchDashboardData = async () => {
     try {
-      const [alarmsRes, historyRes, invitesRes] = await Promise.all([
+      const [alarmsRes, historyRes, invitesRes, adviceRes] = await Promise.all([
         apiClient.get("/alarms"),
         apiClient.get("/performance/history?limit=10"),
         apiClient.get("/coach/invites/pending"),
+        apiClient.get("/coach/advice/my-advice")
       ]);
       setAlarms(alarmsRes.data.data);
       setHistory(historyRes.data.data || []);
       setPendingInvites(invitesRes.data.data || []);
+      setCoachAdvice(adviceRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     }
@@ -99,6 +102,15 @@ export default function Dashboard() {
     }
   };
 
+  const handleAcknowledgeAdvice = async (adviceId) => {
+    try {
+      await apiClient.post(`/coach/advice/${adviceId}/acknowledge`);
+      setCoachAdvice((prev) => prev.filter((a) => a.id !== adviceId));
+    } catch (err) {
+      alert("Failed to acknowledge advice");
+    }
+  };
+
   const activeAlarmsCount = alarms.filter((a) => a.is_active).length;
   const nextAlarm = alarms
     .filter((a) => a.is_active)
@@ -114,6 +126,38 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 text-slate-800">
+      {/* Active Coach Guidance Advice Banner */}
+      {coachAdvice.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {coachAdvice.map((item) => (
+            <div
+              key={item.id}
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 text-white shadow-xl border border-purple-700/60"
+            >
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40">
+                    💡 Wellness Coach Guidance
+                  </span>
+                  <span className="text-[11px] text-purple-300 font-medium">
+                    From {item.coach_name}
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-white leading-relaxed pt-1">
+                  "{item.message}"
+                </p>
+              </div>
+              <button
+                onClick={() => handleAcknowledgeAdvice(item.id)}
+                className="px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-600 text-xs font-bold text-white transition-all shadow-md shrink-0 cursor-pointer flex items-center gap-1.5"
+              >
+                <FaCheckCircle className="w-3.5 h-3.5" /> Acknowledge
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Pending Coach Invitations Banner */}
       {pendingInvites.length > 0 && (
         <div className="mb-6 space-y-3">
@@ -148,6 +192,7 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-8">

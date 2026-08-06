@@ -38,3 +38,20 @@ def get_recommendations(current_user: User = Depends(get_current_user)):
     redis_client.r.setex(cache_key, 3600, json.dumps(recommendations))
 
     return ResponseModel(message="Recommendations generated", data=recommendations)
+
+@router.get("/trends", response_model=ResponseModel[list])
+def get_analytics_trends(
+    days: int = 30,
+    current_user: User = Depends(get_current_user)
+):
+    trends = telemetry_service.get_daily_trends(current_user.id, days=days)
+    return ResponseModel(message="Analytics trends retrieved", data=trends)
+
+@router.get("/category-performance", response_model=ResponseModel[list])
+def get_category_performance(
+    days: int = 30,
+    current_user: User = Depends(get_current_user)
+):
+    perf = telemetry_service.get_category_performance(current_user.id, days=days)
+    return ResponseModel(message="Category performance retrieved", data=perf)
+

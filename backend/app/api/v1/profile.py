@@ -24,10 +24,25 @@ def get_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
 
+    # Sync difficulty_preference with DDA prediction if history exists
+    try:
+        from app.services.telemetry_service import telemetry_service
+        from app.ml.dda_engine import dda_engine
+        history = telemetry_service.get_user_solve_history(current_user.id, limit=10)
+        if history:
+            rec_diff = dda_engine.predict_next_difficulty(history).capitalize()
+            if profile.difficulty_preference != rec_diff:
+                profile.difficulty_preference = rec_diff
+                db.commit()
+                db.refresh(profile)
+    except Exception:
+        pass
+
     return ResponseModel(
         message="Profile fetched successfully",
         data=profile,
     )
+
 
 
 @router.put("", response_model=ResponseModel[UserProfileResponse])

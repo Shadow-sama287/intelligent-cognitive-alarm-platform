@@ -277,15 +277,26 @@ export default function Profile() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  Default Difficulty
-                </label>
-                <div className="relative">
-                  <FaBrain className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              {/* AI Prescribed Difficulty Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <FaBrain className="text-indigo-500" /> AI Prescribed Difficulty
+                  </label>
+                  <span className="px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider rounded-full bg-purple-100 text-purple-700 border border-purple-200">
+                    {profile.difficulty_preference || "Medium"} Tier
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  ⚡ <strong>Prescribed by ICAP Intelligence:</strong> Your challenge difficulty level is automatically adjusted in real-time by the Dynamic Difficulty Adjustment (DDA) engine based on your recent solve speeds, attempts, and wake-up consistency.
+                </p>
+
+                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-medium">Baseline Fallback:</span>
                   <select
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
-                    value={profile.difficulty_preference}
+                    className="bg-white border border-slate-200 text-slate-800 rounded-md px-3 py-1 text-xs font-semibold focus:outline-none focus:border-indigo-500 capitalize"
+                    value={profile.difficulty_preference?.toLowerCase() || "medium"}
                     onChange={(e) =>
                       handleChange("difficulty_preference", e.target.value)
                     }
@@ -298,6 +309,7 @@ export default function Profile() {
                   </select>
                 </div>
               </div>
+
 
               <div>
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">

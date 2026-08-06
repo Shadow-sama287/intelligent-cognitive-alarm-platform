@@ -186,4 +186,43 @@ class CoachClient(Base):
     )
 
     coach: Mapped["User"] = relationship("User", foreign_keys=[coach_id])
-    client: Mapped["User"] = relationship("User", foreign_keys=[client_id])
+    client: Mapped["User"] = relationship("User", foreign_keys=[client_id])
+
+
+class CoachAdvice(Base):
+    __tablename__ = "coach_advice"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    coach_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+
+    message: Mapped[str] = mapped_column(
+        String(1000),
+        nullable=False,
+    )
+
+    is_acknowledged: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    coach: Mapped["User"] = relationship("User", foreign_keys=[coach_id])
+    client: Mapped["User"] = relationship("User", foreign_keys=[client_id])
+
