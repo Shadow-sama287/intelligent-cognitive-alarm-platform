@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+from uuid import UUID
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.user import User, UserProfile, Role
 from app.models.alarm import Alarm
+from app.schemas.user import UserResponse, UserRoleUpdate
 from app.schemas.common import ResponseModel
 from app.api.deps import require_role
 
@@ -43,3 +46,34 @@ def get_admin_stats(
     }
 
     return ResponseModel(message="Admin stats fetched successfully", data=stats)
+
+
+@router.get("/users", response_model=ResponseModel[List[UserResponse]])
+def get_all_users(
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_required),
+):
+    """Fetch list of all users in the system."""
+    users = db.query(User).all()
+    return ResponseModel(message="Users fetched successfully", data=users)
+
+
+@router.patch("/users/{user_id}/role", response_model=ResponseModel[UserResponse])
+def update_user_role(
+    user_id: UUID,
+    role_in: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(admin_required),
+):
+    """Update role of a user (e.g. promote to 'coach' or 'administrator')."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    user.role = role_in.role
+    db.commit()
+    db.refresh(user)
+    return ResponseModel(message=f"User role updated to {user.role.value}", data=user)
+

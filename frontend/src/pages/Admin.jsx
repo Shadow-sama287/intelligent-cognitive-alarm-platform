@@ -46,27 +46,45 @@ function StatCard({ icon: Icon, label, value, accent }) {
 
 export default function Admin() {
   const [stats, setStats] = useState(null);
-  // "loading" | "denied" | "error" | "ready"
+  const [users, setUsers] = useState([]);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [updatingUser, setUpdatingUser] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, usersRes] = await Promise.all([
+        apiClient.get("/admin/stats"),
+        apiClient.get("/admin/users"),
+      ]);
+      setStats(statsRes.data.data);
+      setUsers(usersRes.data.data || []);
+      setStatus("ready");
+    } catch (err) {
+      if (err.response?.status === 403) {
+        setStatus("denied");
+      } else {
+        setErrorMsg("Failed to load admin dashboard. Please try again.");
+        setStatus("error");
+      }
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await apiClient.get("/admin/stats");
-        setStats(res.data.data);
-        setStatus("ready");
-      } catch (err) {
-        if (err.response?.status === 403) {
-          setStatus("denied");
-        } else {
-          setErrorMsg("Failed to load admin stats. Please try again.");
-          setStatus("error");
-        }
-      }
-    };
-    fetchStats();
+    fetchData();
   }, []);
+
+  const handleRoleChange = async (userId, newRole) => {
+    setUpdatingUser(userId);
+    try {
+      await apiClient.patch(`/admin/users/${userId}/role`, { role: newRole });
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to update role");
+    } finally {
+      setUpdatingUser(null);
+    }
+  };
 
   // --- Loading ---
   if (status === "loading") {
@@ -121,13 +139,13 @@ export default function Admin() {
     );
   }
 
-  // --- Stats ---
+  // --- Stats & Management ---
   return (
     <div className="dashboard">
       <div className="dashboard-hero">
         <div>
           <h2>Admin Dashboard</h2>
-          <p>Platform-wide statistics and user overview.</p>
+          <p>Platform-wide statistics and role management.</p>
         </div>
       </div>
 
@@ -170,6 +188,92 @@ export default function Admin() {
           accent="#8b5cf6"
         />
       </div>
+
+      {/* User Role Management Section */}
+      <div
+        style={{
+          marginTop: "2.5rem",
+          background: "var(--card-bg, #1e293b)",
+          borderRadius: "14px",
+          padding: "1.5rem",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        <h3 style={{ margin: "0 0 1rem", color: "#f1f5f9", fontSize: "1.2rem" }}>
+          User Role Management
+        </h3>
+        <p style={{ color: "#94a3b8", fontSize: "0.875rem", marginBottom: "1.25rem" }}>
+          Promote users to Coach or Administrator roles to grant elevated permissions.
+        </p>
+
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", color: "#cbd5e1", fontSize: "0.9rem" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #334155", textAlign: "left" }}>
+                <th style={{ padding: "0.75rem" }}>Full Name</th>
+                <th style={{ padding: "0.75rem" }}>Email</th>
+                <th style={{ padding: "0.75rem" }}>Current Role</th>
+                <th style={{ padding: "0.75rem" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} style={{ borderBottom: "1px solid #334155" }}>
+                  <td style={{ padding: "0.75rem", fontWeight: 600, color: "#f8fafc" }}>
+                    {u.full_name}
+                  </td>
+                  <td style={{ padding: "0.75rem" }}>{u.email}</td>
+                  <td style={{ padding: "0.75rem" }}>
+                    <span
+                      style={{
+                        padding: "0.25rem 0.6rem",
+                        borderRadius: "12px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        background:
+                          u.role?.toUpperCase() === "COACH"
+                            ? "#8b5cf633"
+                            : u.role?.toUpperCase() === "ADMIN" || u.role?.toUpperCase() === "ADMINISTRATOR"
+                            ? "#f59e0b33"
+                            : "#3b82f633",
+                        color:
+                          u.role?.toUpperCase() === "COACH"
+                            ? "#a78bfa"
+                            : u.role?.toUpperCase() === "ADMIN" || u.role?.toUpperCase() === "ADMINISTRATOR"
+                            ? "#fbbf24"
+                            : "#60a5fa",
+                      }}
+                    >
+                      {u.role}
+                    </span>
+                  </td>
+                  <td style={{ padding: "0.75rem" }}>
+                    <select
+                      value={u.role?.toUpperCase()}
+                      disabled={updatingUser === u.id}
+                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      style={{
+                        background: "#0f172a",
+                        color: "#f8fafc",
+                        border: "1px solid #475569",
+                        borderRadius: "6px",
+                        padding: "0.35rem 0.6rem",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="USER">User</option>
+                      <option value="COACH">Coach</option>
+                      <option value="ADMIN">Administrator</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
+
