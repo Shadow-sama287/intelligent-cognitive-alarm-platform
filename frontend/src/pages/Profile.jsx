@@ -17,6 +17,7 @@ import {
 import { apiClient } from "../api/client";
 import { SnoozeSettingsPage } from "./SnoozeSettings";
 import { useAuthStore } from "../store/useAuthStore";
+import { useTheme } from "../context/ThemeContext";
 
 function RoleBadge({ role }) {
   const normalized = role?.toUpperCase();
@@ -43,6 +44,7 @@ function RoleBadge({ role }) {
 
 export default function Profile() {
   const user = useAuthStore((state) => state.user);
+  const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState({
     preferred_wake_time: "07:00",
     target_sleep_hours: 8,
@@ -407,12 +409,28 @@ export default function Profile() {
               <FaSun className="text-orange-400" /> Appearance
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <button className="border-2 border-orange-400 text-orange-500 font-semibold py-4 rounded-xl flex flex-col items-center justify-center gap-2 bg-orange-50/30">
-                <FaSun className="w-6 h-6" />
+              <button
+                type="button"
+                onClick={() => setTheme("light")}
+                className={`border-2 font-semibold py-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                  theme === "light"
+                    ? "border-orange-400 text-orange-500 bg-orange-500/10 shadow-xs"
+                    : "border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <FaSun className={`w-6 h-6 ${theme === "light" ? "text-orange-400" : "text-slate-400"}`} />
                 <span className="text-xs uppercase tracking-wider">Light</span>
               </button>
-              <button className="border-2 border-slate-200 text-slate-500 font-semibold py-4 rounded-xl flex flex-col items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 transition-colors">
-                <FaMoon className="w-6 h-6 text-slate-400" />
+              <button
+                type="button"
+                onClick={() => setTheme("dark")}
+                className={`border-2 font-semibold py-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                  theme === "dark"
+                    ? "border-indigo-500 text-indigo-400 bg-indigo-500/20 shadow-xs"
+                    : "border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <FaMoon className={`w-6 h-6 ${theme === "dark" ? "text-indigo-400" : "text-slate-400"}`} />
                 <span className="text-xs uppercase tracking-wider">Dark</span>
               </button>
             </div>
