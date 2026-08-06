@@ -16,6 +16,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
   const { theme, toggleTheme } = useTheme();
@@ -52,9 +53,17 @@ export default function Navbar() {
           <FaChartLine /> Analytics
         </Link>
 
-        <Link to="/coach" className="navbar-link">
-          <FaUserFriends /> Coach
-        </Link>
+        {user?.role?.toLowerCase() === "coach" && (
+          <Link to="/coach" className="navbar-link">
+            <FaUserFriends /> Coach
+          </Link>
+        )}
+
+        {(user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "administrator") && (
+          <Link to="/admin" className="navbar-link">
+            <FaUserCircle /> Admin
+          </Link>
+        )}
 
         <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile

@@ -45,3 +45,8 @@ class SnoozeSettingsUpdate(BaseModel):
     snooze_limit: int = Field(default=3, ge=0, le=10, description="Max allowed snoozes")
     escalate_difficulty: bool = True
     time_penalty_enabled: bool = True
+
+
+class UserRoleUpdate(BaseModel):
+    role: Role
+

@@ -18,9 +18,9 @@ from app.db.session import Base
 
 
 class Role(str, enum.Enum):
-    USER = "user"
-    ADMIN = "administrator"
-    COACH = "coach"
+    USER = "USER"
+    ADMIN = "ADMIN"
+    COACH = "COACH"
 
 
 class User(Base):
@@ -143,6 +143,12 @@ class UserProfile(Base):
         back_populates="profile",
     )
     
+class CoachStatus(str, enum.Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
 class CoachClient(Base):
     __tablename__ = "coach_clients"
 
@@ -162,7 +168,22 @@ class CoachClient(Base):
         nullable=False,
     )
 
+    status: Mapped[CoachStatus] = mapped_column(
+        SQLEnum(CoachStatus),
+        default=CoachStatus.PENDING,
+        nullable=False,
+    )
+
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
     )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+    )
+
+    coach: Mapped["User"] = relationship("User", foreign_keys=[coach_id])
+    client: Mapped["User"] = relationship("User", foreign_keys=[client_id])

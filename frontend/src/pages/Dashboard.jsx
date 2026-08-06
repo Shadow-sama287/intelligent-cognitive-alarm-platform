@@ -69,22 +69,35 @@ export default function Dashboard() {
 
   const [alarms, setAlarms] = useState([]);
   const [history, setHistory] = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [alarmsRes, historyRes, invitesRes] = await Promise.all([
+        apiClient.get("/alarms"),
+        apiClient.get("/performance/history?limit=10"),
+        apiClient.get("/coach/invites/pending"),
+      ]);
+      setAlarms(alarmsRes.data.data);
+      setHistory(historyRes.data.data || []);
+      setPendingInvites(invitesRes.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch dashboard data", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [alarmsRes, historyRes] = await Promise.all([
-          apiClient.get("/alarms"),
-          apiClient.get("/performance/history?limit=10"),
-        ]);
-        setAlarms(alarmsRes.data.data);
-        setHistory(historyRes.data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      }
-    };
-    fetchData();
+    fetchDashboardData();
   }, []);
+
+  const handleInviteResponse = async (inviteId, action) => {
+    try {
+      await apiClient.post(`/coach/invites/${inviteId}/respond`, { action });
+      await fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to process invitation");
+    }
+  };
 
   const activeAlarmsCount = alarms.filter((a) => a.is_active).length;
   const nextAlarm = alarms
@@ -101,11 +114,46 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 text-slate-800">
+      {/* Pending Coach Invitations Banner */}
+      {pendingInvites.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {pendingInvites.map((inv) => (
+            <div
+              key={inv.id}
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-indigo-900 text-white shadow-lg border border-indigo-700"
+            >
+              <div>
+                <h4 className="font-semibold text-sm text-indigo-100">
+                  ⚡ Coaching Invitation Received!
+                </h4>
+                <p className="text-xs text-indigo-200 mt-0.5">
+                  <span className="font-bold text-white">{inv.coach_name || "A Wellness Coach"}</span> ({inv.coach_email}) wants to view your wake & habit analytics to coach you.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleInviteResponse(inv.id, "accept")}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-xs font-bold text-white transition-colors"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => handleInviteResponse(inv.id, "reject")}
+                  className="px-3.5 py-1.5 rounded-lg bg-indigo-950 hover:bg-rose-900 text-xs font-semibold text-rose-200 transition-colors border border-indigo-700"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-1">
-            {greeting}, {user?.username || "there"}! 👋
+            {greeting}, {user?.full_name || user?.username || "there"}! 👋
           </h1>
           <p className="text-slate-500 text-sm">
             Manage your cognitive alarms effortlessly.
