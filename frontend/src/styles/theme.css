@@ -1,0 +1,477 @@
+/* ============================================================
+   ICAP THEME SYSTEM
+   Two design languages, one variable contract.
+
+   .theme-web    -> "Lumina Analytics"  (web / coach dashboard)
+   .theme-mobile -> "Lumina Mind"       (mobile alarm app)
+
+   Both scopes define the SAME custom-property names, so any
+   component using bg-primary / text-on-surface / rounded-lg
+   etc. automatically renders correctly no matter which scope
+   it's mounted inside. Never read a raw hex value in a
+   component — always go through a token.
+   ============================================================ */
+
+/* ---- Fonts ------------------------------------------------- */
+/* Outfit: headers + display type on both surfaces.
+   Inter: body/data text on the mobile surface only
+   (web surface uses Outfit throughout per Lumina Analytics spec). */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;600&display=swap');
+
+/* ---- Base reset --------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ==============================================================
+   WEB SURFACE — "Lumina Analytics" (Light Mode)
+   Wrap the web dashboard's top-level layout element with
+   className="theme-web". Everything inside inherits these tokens.
+   ============================================================== */
+.theme-web {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-surface: #f7f9fb;
+  --color-surface-dim: #d8dadc;
+  --color-surface-bright: #f7f9fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container: #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-surface-variant: #e0e3e5;
+
+  /* On-surface text */
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #4e4444;
+  --color-inverse-surface: #2d3133;
+  --color-inverse-on-surface: #eff1f3;
+
+  /* Outline */
+  --color-outline: #807474;
+  --color-outline-variant: #d1c3c3;
+  --color-surface-tint: #6a5b5b;
+
+  /* Primary (Deep Navy/Ebony) */
+  --color-primary: #000000;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #241919;
+  --color-on-primary-container: #918080;
+  --color-inverse-primary: #d5c2c1;
+
+  /* Secondary (Amber) */
+  --color-secondary: #855300;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fea619;
+  --color-on-secondary-container: #684000;
+
+  /* Tertiary (Coral) */
+  --color-tertiary: #000000;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #40000d;
+  --color-on-tertiary-container: #f23d5c;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Fixed variants */
+  --color-primary-fixed: #f2dedd;
+  --color-primary-fixed-dim: #d5c2c1;
+  --color-on-primary-fixed: #241919;
+  --color-on-primary-fixed-variant: #514443;
+  --color-secondary-fixed: #ffddb8;
+  --color-secondary-fixed-dim: #ffb95f;
+  --color-on-secondary-fixed: #2a1700;
+  --color-on-secondary-fixed-variant: #653e00;
+  --color-tertiary-fixed: #ffdadb;
+  --color-tertiary-fixed-dim: #ffb2b7;
+  --color-on-tertiary-fixed: #40000d;
+  --color-on-tertiary-fixed-variant: #92002a;
+
+  /* Background */
+  --color-background: #f7f9fb;
+  --color-on-background: #191c1e;
+
+  /* Data viz (not part of MD3 token set, specific to Analytics) */
+  --color-chart-slate: #64748b;
+  --color-chart-teal: #0d9488;
+
+  /* Shape */
+  --radius-sm: 0.125rem;
+  --radius-default: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-sidebar-width: 260px;
+  --spacing-container-max-width: 1440px;
+  --spacing-gutter: 24px;
+  --spacing-margin-page: 32px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 24px;
+
+  /* Elevation */
+  --shadow-hover: 0 4px 20px rgba(15, 23, 42, 0.05);
+  --border-card: 1px solid #e2e8f0;
+
+  /* Fonts */
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+
+  background: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-body);
+}
+
+/* ==============================================================
+   WEB SURFACE — "Lumina Analytics" (Dark Mode)
+   Overrides tokens when .dark is present on <html> or .theme-web
+   ============================================================== */
+.dark .theme-web,
+.theme-web.dark {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-surface: #0b0f19;
+  --color-surface-dim: #070a12;
+  --color-surface-bright: #1e293b;
+  --color-surface-container-lowest: #182234;
+  --color-surface-container-low: #131c2e;
+  --color-surface-container: #0f172a;
+  --color-surface-container-high: #243047;
+  --color-surface-container-highest: #334155;
+  --color-surface-variant: #243047;
+
+  /* On-surface text */
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #94a3b8;
+  --color-inverse-surface: #f8fafc;
+  --color-inverse-on-surface: #0b0f19;
+
+  /* Outline */
+  --color-outline: #64748b;
+  --color-outline-variant: rgba(255, 255, 255, 0.08);
+  --color-surface-tint: #818cf8;
+
+  /* Primary */
+  --color-primary: #818cf8;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #312e81;
+  --color-on-primary-container: #e0e7ff;
+  --color-inverse-primary: #1e1b4b;
+
+  /* Secondary (Amber) */
+  --color-secondary: #fbbf24;
+  --color-on-secondary: #451a03;
+  --color-secondary-container: #78350f;
+  --color-on-secondary-container: #fef3c7;
+
+  /* Tertiary (Coral) */
+  --color-tertiary: #fb7185;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #881337;
+  --color-on-tertiary-container: #ffe4e6;
+
+  /* Error */
+  --color-error: #f87171;
+  --color-on-error: #450a0a;
+  --color-error-container: #7f1d1d;
+  --color-on-error-container: #fee2e2;
+
+  /* Background */
+  --color-background: #0b0f19;
+  --color-on-background: #f8fafc;
+
+  /* Elevation */
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --border-card: 1px solid rgba(255, 255, 255, 0.08);
+
+  background: var(--color-background);
+  color: var(--color-on-background);
+}
+
+/* Automatic Dark Mode utility overrides for legacy white card classes */
+.dark .theme-web .bg-white {
+  background-color: var(--color-surface-container-lowest) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.dark .theme-web .bg-slate-50,
+.dark .theme-web .bg-slate-100,
+.dark .theme-web .bg-slate-200\/50,
+.dark .theme-web .bg-slate-100\/70,
+.dark .theme-web .bg-indigo-50\/70 {
+  background-color: var(--color-surface-container) !important;
+  color: var(--color-on-surface) !important;
+}
+
+.dark .theme-web .text-slate-900,
+.dark .theme-web .text-slate-800 {
+  color: var(--color-on-surface) !important;
+}
+
+.dark .theme-web .text-slate-700,
+.dark .theme-web .text-slate-600,
+.dark .theme-web .text-slate-500,
+.dark .theme-web .text-slate-400 {
+  color: var(--color-on-surface-variant) !important;
+}
+
+.dark .theme-web .border-slate-200,
+.dark .theme-web .border-slate-100,
+.dark .theme-web .border-slate-300\/50,
+.dark .theme-web .border-indigo-100 {
+  border-color: var(--color-outline-variant) !important;
+}
+
+.dark .theme-web input,
+.dark .theme-web select {
+  background-color: var(--color-surface-container) !important;
+  color: var(--color-on-surface) !important;
+  border-color: var(--color-outline-variant) !important;
+}
+
+/* ==============================================================
+   MOBILE SURFACE — "Lumina Mind"
+   Wrap the mobile app shell's top-level layout element with
+   className="theme-mobile". Everything inside inherits these tokens.
+   ============================================================== */
+.theme-mobile {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-surface: #1b1111;
+  --color-surface-dim: #1b1111;
+  --color-surface-bright: #433637;
+  --color-surface-container-lowest: #160b0c;
+  --color-surface-container-low: #24191a;
+  --color-surface-container: #281d1d;
+  --color-surface-container-high: #332728;
+  --color-surface-container-highest: #3f3132;
+  --color-surface-variant: #3f3132;
+
+  /* On-surface text */
+  --color-on-surface: #f3ddde;
+  --color-on-surface-variant: #debfc1;
+  --color-inverse-surface: #f3ddde;
+  --color-inverse-on-surface: #3a2d2e;
+
+  /* Outline */
+  --color-outline: #a58a8c;
+  --color-outline-variant: #574143;
+  --color-surface-tint: #ffb2b9;
+
+  /* Primary (Coral / dawn) */
+  --color-primary: #ffb2b9;
+  --color-on-primary: #67001f;
+  --color-primary-container: #fb7185;
+  --color-on-primary-container: #6f0122;
+  --color-inverse-primary: #a93349;
+
+  /* Secondary (Navy/Indigo) */
+  --color-secondary: #c3c6d7;
+  --color-on-secondary: #2c303d;
+  --color-secondary-container: #454957;
+  --color-on-secondary-container: #b5b8c9;
+
+  /* Tertiary (Indigo accent) */
+  --color-tertiary: #bcc7de;
+  --color-on-tertiary: #263143;
+  --color-tertiary-container: #939eb5;
+  --color-on-tertiary-container: #2a3548;
+
+  /* Error */
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  /* Fixed variants */
+  --color-primary-fixed: #ffdadc;
+  --color-primary-fixed-dim: #ffb2b9;
+  --color-on-primary-fixed: #400010;
+  --color-on-primary-fixed-variant: #891933;
+  --color-secondary-fixed: #dfe2f3;
+  --color-secondary-fixed-dim: #c3c6d7;
+  --color-on-secondary-fixed: #171b28;
+  --color-on-secondary-fixed-variant: #434654;
+  --color-tertiary-fixed: #d8e3fb;
+  --color-tertiary-fixed-dim: #bcc7de;
+  --color-on-tertiary-fixed: #111c2d;
+  --color-on-tertiary-fixed-variant: #3c475a;
+
+  /* Background */
+  --color-background: #1b1111;
+  --color-on-background: #f3ddde;
+
+  /* Wellness-specific accents (not part of MD3 token set) */
+  --color-amber-accent: #f59e0b;
+  --color-sage-success: #87a878;
+
+  /* Shape */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-unit: 8px;
+  --spacing-container-padding-mobile: 24px;
+  --spacing-container-padding-desktop: 48px;
+  --spacing-gutter: 16px;
+  --spacing-stack-sm: 12px;
+  --spacing-stack-md: 24px;
+  --spacing-stack-lg: 40px;
+
+  /* Elevation */
+  --shadow-active: 0 8px 30px rgba(251, 113, 133, 0.15);
+  --border-card: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-blur: 20px;
+  --glass-opacity: 0.7;
+
+  /* Fonts */
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  background: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-body);
+}
+
+/* ==============================================================
+   TYPE SCALE
+   Composed text styles (family + size + weight + line-height +
+   letter-spacing bundled together, MD3-style). These resolve
+   differently per scope because --font-display / --font-body
+   differ, but the class names are shared.
+   ============================================================== */
+
+/* Shared across both scopes */
+.text-headline-lg {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 40px;
+}
+.text-headline-md {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 32px;
+}
+.text-body-lg {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 28px;
+}
+.text-body-md {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+/* Web-only */
+.theme-web .text-display-lg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 48px;
+  line-height: 56px;
+  letter-spacing: -0.02em;
+}
+.theme-web .text-headline-lg {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.theme-web .text-headline-sm {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 28px;
+}
+.theme-web .text-body-sm {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+}
+.theme-web .text-label-md {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.theme-web .text-stats-lg {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 44px;
+  letter-spacing: -0.03em;
+}
+
+/* Mobile-only */
+.theme-mobile .text-display-time {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 80px;
+  line-height: 96px;
+  letter-spacing: -0.02em;
+}
+.theme-mobile .text-headline-lg-mobile {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 36px;
+}
+.theme-mobile .text-label-sm {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ==============================================================
+   SURFACE-SPECIFIC COMPONENT PRIMITIVES
+   Small set of hand-tuned effects that don't reduce cleanly to
+   Tailwind utilities (glassmorphism, tonal glow, etc.)
+   ============================================================== */
+
+.theme-web .card-elevated {
+  border: var(--border-card);
+  transition: box-shadow 150ms ease;
+}
+.theme-web .card-elevated:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.theme-mobile .card-active-glow {
+  box-shadow: var(--shadow-active);
+}
+.theme-mobile .glass-nav {
+  backdrop-filter: blur(var(--glass-blur));
+  background: color-mix(in srgb, var(--color-surface-container) var(--glass-opacity), transparent);
+}

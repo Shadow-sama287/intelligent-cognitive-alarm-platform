@@ -7,19 +7,14 @@ import {
   FaClock,
   FaChartLine,
   FaUserFriends,
-  FaMoon,
-  FaSun,
 } from "react-icons/fa";
 
 import { useAuthStore } from "../../store/useAuthStore";
-import { useTheme } from "../../context/ThemeContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-
-  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -68,14 +63,6 @@ export default function Navbar() {
         <Link to="/profile" className="navbar-link">
           <FaUserCircle /> Profile
         </Link>
-
-        <button
-          type="button"
-          className="theme-toggle-btn"
-          onClick={toggleTheme}
-        >
-          {theme === "dark" ? <FaSun /> : <FaMoon />}
-        </button>
 
         <button
           type="button"

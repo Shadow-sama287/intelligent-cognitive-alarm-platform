@@ -50,7 +50,9 @@ function App() {
             isAuthenticated ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <Login />
+              <div className="theme-web min-h-screen bg-background text-on-background">
+                <Login />
+              </div>
             )
           }
         />
@@ -61,7 +63,9 @@ function App() {
             isAuthenticated ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <Register />
+              <div className="theme-web min-h-screen bg-background text-on-background">
+                <Register />
+              </div>
             )
           }
         />
