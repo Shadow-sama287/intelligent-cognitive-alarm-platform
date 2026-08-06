@@ -284,13 +284,13 @@ useEffect(() => {
           return (
             <div
               key={alarm.id}
-              className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm relative group"
+              className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm relative group transition-all"
             >
               {/* Toggle switch */}
               <div className="absolute top-6 right-6">
                 <button
                   onClick={() => toggleAlarm(alarm.id)}
-                  className={`w-12 h-6 rounded-full flex items-center transition-colors px-1 ${alarm.is_active ? "bg-slate-900" : "bg-slate-200"}`}
+                  className={`w-12 h-6 rounded-full flex items-center transition-colors px-1 cursor-pointer ${alarm.is_active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"}`}
                 >
                   <div
                     className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform ${alarm.is_active ? "translate-x-6" : ""}`}
@@ -304,15 +304,15 @@ useEffect(() => {
                 onClick={() => handleEdit(alarm)}
                 style={{ cursor: "pointer" }}
               >
-                <span className="text-4xl font-bold text-slate-900">
+                <span className="text-4xl font-bold text-slate-900 dark:text-slate-50">
                   {time}
                 </span>
-                <span className="text-lg font-medium text-slate-500">
+                <span className="text-lg font-medium text-slate-500 dark:text-slate-400">
                   {ampm}
                 </span>
               </div>
 
-              <div className="text-sm font-medium text-slate-600 mb-4">
+              <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-4">
                 {alarm.title || "Alarm"}
               </div>
 
@@ -323,8 +323,8 @@ useEffect(() => {
                   return (
                     <div
                       key={fullDay}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-semibold
-                        ${isActive ? "bg-slate-200 text-slate-800" : "bg-slate-50 text-slate-300"}`}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-colors
+                        ${isActive ? "bg-indigo-600 text-white shadow-xs" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 border border-slate-200/50 dark:border-slate-700/50"}`}
                     >
                       {SHORT_DAYS[idx]}
                     </div>
@@ -332,23 +332,20 @@ useEffect(() => {
                 })}
               </div>
 
-              <hr className="border-slate-100 my-4" />
+              <hr className="border-slate-100 dark:border-slate-800 my-4" />
 
               <div className="flex justify-between items-center">
                 <div
-                  className={`flex items-center gap-2 text-sm font-semibold capitalize ${colorClass}`}
+                  className={`flex items-center gap-2 text-sm font-bold capitalize ${colorClass}`}
                 >
-                  <Icon /> {alarm.challenge_category} Challenge -{" "}
-                  {alarm.difficulty_override !== "default"
-                    ? alarm.difficulty_override
-                    : "Medium"}
+                  <Icon /> {alarm.challenge_category} Challenge
                 </div>
 
                 {/* Edit and Delete buttons (visible on hover) */}
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-4">
                   <button
                     onClick={() => handleEdit(alarm)}
-                    className="text-xs text-indigo-500 hover:text-indigo-600 font-bold"
+                    className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 font-bold cursor-pointer"
                   >
                     Edit
                   </button>
@@ -357,7 +354,7 @@ useEffect(() => {
                       if (window.confirm("Delete this alarm?"))
                         deleteAlarm(alarm.id);
                     }}
-                    className="text-xs text-rose-500 hover:text-rose-600 font-bold"
+                    className="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 font-bold cursor-pointer"
                   >
                     Delete
                   </button>
@@ -381,10 +378,10 @@ useEffect(() => {
             });
             setShowModal(true);
           }}
-          className="border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center py-12 min-h-[220px] rounded-xl text-slate-500 hover:bg-slate-100 cursor-pointer transition-colors"
+          className="border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex flex-col items-center justify-center py-12 min-h-[220px] rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
         >
-          <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center mb-3">
-            <FaClock className="text-slate-400 text-xl" />
+          <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3">
+            <FaClock className="text-slate-400 dark:text-slate-500 text-xl" />
           </div>
           <span className="font-semibold">Create New</span>
         </div>
@@ -392,54 +389,56 @@ useEffect(() => {
 
       {/* Analytics Section */}
 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-  <div className="lg:col-span-2 bg-slate-200/50 rounded-xl p-6 border border-slate-300/50">
+  <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
     <div className="flex justify-between items-start mb-8">
-      <h3 className="text-lg font-bold text-slate-900">
+      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
         Category
         <br />
         Breakdown
       </h3>
-      <span className="text-xs font-medium text-slate-500">
+      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
         {analytics?.total_solved || 0} Total Solves
       </span>
     </div>
 
     {/* Dynamic Bar Chart from Analytics API */}
-    <div className="flex items-end justify-between h-32 mb-4 gap-2">
+    <div className="flex items-end justify-between h-36 mb-4 gap-3 pt-4">
       {analytics?.by_category?.length > 0 ? (
         analytics.by_category.map((cat, i) => {
           const maxCount = Math.max(...analytics.by_category.map((c) => c.count));
-          const height = maxCount > 0 ? (cat.count / maxCount) * 100 : 0;
+          const heightPercent = maxCount > 0 ? Math.max((cat.count / maxCount) * 100, 10) : 0;
           return (
-            <div key={i} className="flex flex-col items-center w-full gap-1">
-              <span className="text-[10px] text-slate-500 font-semibold">
+            <div key={i} className="flex-1 h-full flex flex-col justify-end items-center gap-1.5 group relative">
+              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                 {cat.count}
               </span>
-              <div
-                className="w-full bg-rose-500 rounded-t-sm"
-                style={{ height: `${height}%` }}
-              />
-              <span className="text-[10px] text-slate-600 capitalize truncate">
+              <div className="w-full flex-1 flex items-end bg-slate-100 dark:bg-slate-800 rounded-t-md p-0.5">
+                <div
+                  className="w-full bg-rose-500 hover:bg-rose-600 rounded-t-sm transition-all duration-300 shadow-xs"
+                  style={{ height: `${heightPercent}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 capitalize truncate w-full text-center">
                 {cat.category}
               </span>
             </div>
           );
         })
       ) : (
-        <p className="text-sm text-slate-500 text-center w-full py-8">
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-center w-full py-8">
           No challenge data yet. Solve some challenges!
         </p>
       )}
     </div>
 
-    <hr className="border-slate-300 mb-4" />
-    <p className="text-xs text-slate-600">
+    <hr className="border-slate-200 dark:border-slate-800 mb-4" />
+    <p className="text-xs text-slate-600 dark:text-slate-400">
       {analytics?.avg_solve_time ? (
         <>
           Average solve time:{" "}
-          <strong className="text-slate-900">{analytics.avg_solve_time}s</strong>
+          <strong className="text-slate-900 dark:text-slate-100">{analytics.avg_solve_time}s</strong>
           {" · "}Average attempts:{" "}
-          <strong className="text-slate-900">{analytics.avg_attempts}</strong>
+          <strong className="text-slate-900 dark:text-slate-100">{analytics.avg_attempts}</strong>
         </>
       ) : (
         "Solve challenges to see performance insights here."
@@ -447,18 +446,31 @@ useEffect(() => {
     </p>
   </div>
 
+
   {/* Difficulty Distribution Card */}
   <div className="bg-[#2a2624] rounded-xl p-6 text-white flex flex-col justify-between">
     <div>
       <h3 className="text-lg font-semibold mb-4">Difficulty Breakdown</h3>
       {analytics?.by_difficulty?.length > 0 ? (
-        <div className="space-y-3">
-          {analytics.by_difficulty.map((d, i) => (
-            <div key={i} className="flex justify-between items-center">
-              <span className="text-xs text-slate-400 capitalize">{d.difficulty}</span>
-              <span className="text-sm font-bold text-white">{d.count} solved</span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {analytics.by_difficulty.map((d, i) => {
+            const total = analytics?.total_solved || 1;
+            const pct = Math.round((d.count / total) * 100);
+            return (
+              <div key={i} className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-300 font-medium capitalize">{d.difficulty}</span>
+                  <span className="font-bold text-white">{d.count} solved ({pct}%)</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-700/60 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-amber-500 to-rose-500 rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="text-xs text-slate-400">No data yet.</p>
@@ -582,42 +594,22 @@ useEffect(() => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 tracking-wider mb-2 uppercase">
-                    Difficulty
-                  </label>
-                  <select
-                    className="w-full bg-slate-50 border-none text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                    value={alarmForm.difficulty_override}
-                    onChange={(e) =>
-                      handleChange("difficulty_override", e.target.value)
-                    }
-                  >
-                    <option value="default">Default</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 tracking-wider mb-2 uppercase">
-                    Snooze Limit
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    className="w-full bg-slate-50 border-none text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                    value={alarmForm.snooze_limit}
-                    onChange={(e) =>
-                      handleChange("snooze_limit", Number(e.target.value))
-                    }
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 tracking-wider mb-2 uppercase">
+                  Snooze Limit
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  className="w-full bg-slate-50 border-none text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  value={alarmForm.snooze_limit}
+                  onChange={(e) =>
+                    handleChange("snooze_limit", Number(e.target.value))
+                  }
+                />
               </div>
+
 
               <div className="sticky bottom-0 bg-white py-4 mt-auto z-10 space-y-3">
                 {errorMessage && (

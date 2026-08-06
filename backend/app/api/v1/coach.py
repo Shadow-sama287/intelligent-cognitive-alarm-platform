@@ -207,24 +207,35 @@ def get_assigned_clients(
         if not client_user:
             continue
 
-        # Baseline analytics for client
-        habit_score = 78.5 if record.status == CoachStatus.ACCEPTED else 0.0
-        avg_snoozes = 1.4 if record.status == CoachStatus.ACCEPTED else 0.0
-        wake_consistency = 88.0 if record.status == CoachStatus.ACCEPTED else 0.0
+        # Dynamic analytics for client from habit service
+        if record.status == CoachStatus.ACCEPTED:
+            from app.services.habit_service import habit_service
+            score_data = habit_service.calculate_habit_score(client_user.id)
+            habit_score = score_data.get("habit_score", 0.0)
+            breakdown = score_data.get("breakdown", {})
+            avg_snoozes = breakdown.get("avg_snoozes", 0.0)
+            wake_consistency = breakdown.get("wake_consistency", 0.0)
+        else:
+            habit_score = 0.0
+            avg_snoozes = 0.0
+            wake_consistency = 0.0
 
         reasons = []
         if habit_score < 70 and record.status == CoachStatus.ACCEPTED:
-            reasons.append("Low habit score")
-        if avg_snoozes > 3.0 and record.status == CoachStatus.ACCEPTED:
-            reasons.append("High snooze count")
+            reasons.append(f"Low habit score ({habit_score} / 100)")
+        if avg_snoozes >= 2.5 and record.status == CoachStatus.ACCEPTED:
+            reasons.append(f"High average snoozes ({avg_snoozes} / alarm)")
 
         status_label = "Healthy"
         if record.status == CoachStatus.PENDING:
             status_label = "Pending Invite"
         elif record.status == CoachStatus.REJECTED:
             status_label = "Invite Declined"
+        elif avg_snoozes >= 2.5:
+            status_label = "High Snooze"
         elif habit_score < 70:
             status_label = "Needs Attention"
+
 
         client_summaries.append({
             "id": str(record.id),
@@ -240,9 +251,19 @@ def get_assigned_clients(
             "assigned_at": record.assigned_at.isoformat(),
         })
 
+    from app.models.user import CoachAdvice
+    from datetime import datetime, time
+    today_start = datetime.combine(datetime.utcnow().date(), time.min)
+    advice_sent_today = (
+        db.query(CoachAdvice)
+        .filter(CoachAdvice.coach_id == current_user.id, CoachAdvice.created_at >= today_start)
+        .count()
+    )
+
     return {
         "status": "success",
         "data": client_summaries,
+        "advice_sent_today": advice_sent_today,
     }
 
 
@@ -361,7 +382,86 @@ def send_client_advice(
             detail="Coach access required",
         )
 
-    return {
-        "status": "success",
-        "message": "Advice sent to client",
-    }
+    client_id = payload.get("client_id")
+    message_text = payload.get("message")
+
+    if not client_id or not message_text:
+        raise HTTPException(status_code=400, detail="client_id and message are required")
+
+    from app.models.user import CoachAdvice
+    advice_record = CoachAdvice(
+        coach_id=current_user.id,
+        client_id=UUID(client_id) if isinstance(client_id, str) else client_id,
+        message=message_text,
+        is_acknowledged=False,
+    )
+    db.add(advice_record)
+    db.commit()
+    db.refresh(advice_record)
+
+    return ResponseModel(
+        message="Advice sent to client successfully",
+        data={"id": str(advice_record.id), "created_at": advice_record.created_at.isoformat()}
+    )
+
+
+@router.get("/advice/my-advice")
+def get_my_coach_advice(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Client endpoint to view active unacknowledged advice from their coach.
+    """
+    from app.models.user import CoachAdvice
+    advice_records = (
+        db.query(CoachAdvice)
+        .filter(
+            CoachAdvice.client_id == current_user.id,
+            CoachAdvice.is_acknowledged == False,
+        )
+        .order_by(CoachAdvice.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for a in advice_records:
+        coach_user = db.query(User).filter(User.id == a.coach_id).first()
+        result.append({
+            "id": str(a.id),
+            "coach_name": coach_user.full_name if coach_user else "Wellness Coach",
+            "coach_email": coach_user.email if coach_user else "",
+            "message": a.message,
+            "created_at": a.created_at.isoformat(),
+        })
+
+    return ResponseModel(data=result)
+
+
+@router.post("/advice/{advice_id}/acknowledge")
+def acknowledge_coach_advice(
+    advice_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Client endpoint to acknowledge / dismiss a coach advice message.
+    """
+    from app.models.user import CoachAdvice
+    advice = (
+        db.query(CoachAdvice)
+        .filter(
+            CoachAdvice.id == advice_id,
+            CoachAdvice.client_id == current_user.id,
+        )
+        .first()
+    )
+
+    if not advice:
+        raise HTTPException(status_code=404, detail="Advice record not found")
+
+    advice.is_acknowledged = True
+    db.commit()
+
+    return ResponseModel(message="Advice acknowledged successfully", data=None)
+
