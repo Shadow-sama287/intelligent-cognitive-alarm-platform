@@ -521,6 +521,47 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* ==========================================================================
+   Coach Dashboard — supplementary styles
+   (CoachDashboard.jsx is built with Tailwind; these cover the couple of
+   things Tailwind utilities can't express cleanly)
+   ========================================================================== */
+
+/* Thin, indigo-tinted scrollbar for the client analytics table on
+   small screens, matching the scrollbar treatment used elsewhere */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.35); /* indigo-500 @ 35% */
+  border-radius: 9999px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(99, 102, 241, 0.55);
+}
+
+/* Respect reduced-motion preferences for card lift / button scale
+   hover animations used across the Coach Dashboard */
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+{
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
   margin-top: 24px;
 }
 

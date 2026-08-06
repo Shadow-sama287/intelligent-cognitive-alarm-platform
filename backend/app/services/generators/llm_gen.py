@@ -13,7 +13,15 @@ class LLMChallengeGenerator:
     def __init__(self):
         self.client: Optional[object] = None
         self.model_name = "gemini-3.1-flash-lite"
-        self.categories = ["math", "logic", "memory", "word", "pattern", "riddles", "trivia"]
+        self.categories = [
+    "math",
+    "logic",
+    "memory",
+    "stroop",
+    "pattern",
+    "riddles",
+    "trivia"
+]
 
     def _get_client(self):
         if self.client is None:
@@ -42,7 +50,7 @@ class LLMChallengeGenerator:
         Difficulty: {difficulty} (Scale: beginner, easy, medium, hard, expert)
         {avoid_instruction}
         
-        For 'memory', provide a sequence of items to remember. For 'spatial', provide a mental rotation or direction puzzle.
+        For 'memory', provide a sequence of items to remember. For 'stroop', generate a Stroop color-word challenge where the user identifies the ink color rather than the written word. For 'spatial', provide a mental rotation or direction puzzle.
         """
 
         client = self._get_client()

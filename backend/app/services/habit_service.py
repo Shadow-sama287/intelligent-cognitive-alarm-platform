@@ -145,48 +145,59 @@ class HabitScoringService:
             # 1. Real Dynamic Wake-Up Consistency (35%)
             wake_up_consistency = HabitScoringService.calculate_wake_up_consistency(db, user_id)
 
-            # 2. Challenge Completion Success (25%)
-            total_challenges = db.query(UserChallengeHistory).filter(
-                UserChallengeHistory.user_id == str(user_id)
-            ).count()
-
-            if total_challenges > 0:
-                challenge_success = min(100.0, 50.0 + (total_challenges * 5.0))
-            else:
-                challenge_success = 0.0
-
-            # 3. Snooze Reduction Rate (20%)
-            avg_snoozes = db.query(func.avg(SolveTelemetry.snooze_count)).filter(
+            # 2. Snooze Penalty (25%)
+            avg_snoozes = db.query(
+                func.avg(SolveTelemetry.snooze_count)
+            ).filter(
                 SolveTelemetry.user_id == user_id
             ).scalar()
 
-            if avg_snoozes is not None:
-                snooze_reduction = max(0.0, 100.0 - (float(avg_snoozes) * 25))
+            if avg_snoozes is None:
+                avg_snoozes = 0.0
+
+            snooze_penalty = max(
+                0.0,
+                100.0 - (float(avg_snoozes) * 15)
+)
+
+            # 3. Challenge Speed (20%)
+            avg_speed = db.query(
+                func.avg(SolveTelemetry.solve_time_seconds)
+            ).filter(
+                SolveTelemetry.user_id == user_id
+            ).scalar()
+
+            if avg_speed is None:
+                challenge_speed = 100.0
             else:
-                snooze_reduction = 100.0
+                challenge_speed = max(
+                    0.0,
+                    100.0 - (float(avg_speed) / 3)
+                )
 
-            # 4. Real Dynamic Sleep Schedule Adherence (20%)
-            sleep_adherence = HabitScoringService.calculate_sleep_adherence(db, user_id)
-
-            streak_days = HabitScoringService.calculate_streak_days(db, user_id)
+            # 4. Goal Adherence (20%)
+            goal_adherence = HabitScoringService.calculate_sleep_adherence(
+                db,
+                user_id
+            )
 
             # Final Weighted Calculation
             habit_score = round(
-                (0.35 * wake_up_consistency) +
-                (0.25 * challenge_success) +
-                (0.20 * snooze_reduction) +
-                (0.20 * sleep_adherence),
-                1
-            )
+            (0.35 * wake_up_consistency) +
+            (0.25 * snooze_penalty) +
+            (0.20 * challenge_speed) +
+            (0.20 * goal_adherence),
+            1
+        )
 
             return {
                 "habit_score": habit_score,
-                "streak_days": streak_days,
                 "breakdown": {
-                    "wake_up_consistency": wake_up_consistency,
-                    "challenge_success": round(challenge_success, 1),
-                    "snooze_reduction": round(snooze_reduction, 1),
-                    "sleep_adherence": sleep_adherence
+                "wake_consistency": wake_up_consistency,
+                "avg_snoozes": round(float(avg_snoozes), 1),
+                "snooze_penalty": round(snooze_penalty, 1),
+                "challenge_speed": round(challenge_speed, 1),
+                "goal_adherence": goal_adherence
                 }
             }
         finally:
