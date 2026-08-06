@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   View, Text, StyleSheet, FlatList, Switch, SafeAreaView, 
   TouchableOpacity, Modal, TextInput, Button, Alert 
@@ -7,6 +7,12 @@ import { Picker } from "@react-native-picker/picker";
 import { useFocusEffect } from "@react-navigation/native";
 import { mobileApi } from "../services/api";
 import RingerScreen from "./RingerScreen";
+import {
+  requestNotificationPermissions,
+  syncAllAlarms,
+  triggerTestAlarm,
+  startRedisSessionForAlarm,
+} from "../services/notificationService";
 
 const DAYS_OPTIONS = [
   { label: 'M', value: 'MON' },
@@ -31,10 +37,20 @@ export default function AlarmsScreen() {
   const [selectedDays, setSelectedDays] = useState(["MON", "TUE", "WED", "THU", "FRI"]);
   const [newCategory, setNewCategory] = useState("math");
 
+  // ── Request Notification Permissions ──
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
+
+  // ── Load Alarms & Sync with OS Notifications ──
+
   const loadAlarms = async () => {
     try {
       const res = await mobileApi.get("/alarms");
-      setAlarms(res.data.data);
+      const fetchedAlarms = res.data.data;
+      setAlarms(fetchedAlarms);
+      // Sync DB alarms with OS-level Notifee triggers
+      await syncAllAlarms(fetchedAlarms);
     } catch (e) {
       console.error(e);
     }
@@ -133,34 +149,66 @@ export default function AlarmsScreen() {
       console.error(e);
     }
   };
+  // ── Auto Sync Pending Telemetry on Load ──
+  useEffect(() => {
+    const { syncOfflineTelemetry } = require("../services/offlineTelemetryService");
+    syncOfflineTelemetry();
+  }, []);
+
   const startAlarmSession = async (alarm) => {
-  try {
-    const response = await mobileApi.post("/sessions/start", null, {
-      params: {
-        alarm_id: alarm.id,
-        category: alarm.challenge_category,
-      },
-    });
+    try {
+      const response = await mobileApi.post("/sessions/start", null, {
+        params: {
+          alarm_id: alarm.id,
+          category: alarm.challenge_category,
+        },
+        timeout: 3000,
+      });
 
-    setSessionData(response.data.data);
-    setRingerVisible(true);
-  } catch (error) {
-    console.error(error.response?.data || error);;
+      setSessionData(response.data.data);
+      setRingerVisible(true);
+    } catch (error) {
+      console.log("[AlarmSession] Online session unavailable/offline. Generating local challenge fallback:", error?.message);
 
+      const { generateLocalChallenge } = require("../services/localChallengeEngine");
+      const localChallenge = generateLocalChallenge(
+        alarm.challenge_category || 'math',
+        alarm.difficulty_override || 'medium'
+      );
+
+      setSessionData({
+        session_id: `local-session-${Date.now()}`,
+        is_local: true,
+        challenge: localChallenge,
+      });
+      setRingerVisible(true);
+    }
+  };
+
+  // ── Test 5-Second Local Alarm Notification ──
+  const handleTestNotification = async () => {
+    const targetAlarm = alarms.length > 0
+      ? alarms[0]
+      : { id: 1, title: "Test Alarm", challenge_category: "math" };
+    await triggerTestAlarm(targetAlarm, 5);
     Alert.alert(
-  "Error",
-  error.response?.data?.detail ||
-    "Could not start alarm session."
-);
-  }
-};
+      "⏰ Test Alarm Scheduled!",
+      "A local notification will trigger in 5 seconds.\n\nMinimize/background your app now to test notification buzzing and tap-to-open RingerScreen!",
+      [{ text: "OK" }]
+    );
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.heading}>Manage Alarms</Text>
-        <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
-          <Text style={styles.addButtonText}>+ Add</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.testHeaderBtn} onPress={handleTestNotification}>
+            <Text style={styles.testHeaderBtnText}>⚡ Test 5s</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
+            <Text style={styles.addButtonText}>+ Add</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -288,9 +336,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#333",
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  testHeaderBtn: {
+    backgroundColor: "#ffc107",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  testHeaderBtnText: {
+    color: "#212529",
+    fontWeight: "bold",
+    fontSize: 13,
   },
   addButton: {
     backgroundColor: "#007BFF",

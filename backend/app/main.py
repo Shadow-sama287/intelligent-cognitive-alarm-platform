@@ -29,7 +29,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,5 +60,6 @@ def root():
 def on_startup():
     # Create DB tables if they don't exist (development convenience)
     Base.metadata.create_all(bind=engine)
-    # Start background APScheduler engine
-    start_scheduler()
+    # Background APScheduler paused for clean console logging (FCM code retained)
+    # start_scheduler()
+

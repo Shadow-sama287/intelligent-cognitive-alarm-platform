@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 import Constants from 'expo-constants';
 
-let LOCAL_API_BASE = Platform.OS === 'android' ? 'http://10.0.2.2:8000/api/v1' : 'http://localhost:8000/api/v1';
+let LOCAL_API_BASE = 'http://localhost:8000/api/v1';
 
 // Automatically detect host IP address when running inside Expo Go on LAN
 const getAutoHostIp = () => {
@@ -36,9 +36,13 @@ export const mobileApi = axios.create({
 });
 
 mobileApi.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('user_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  try {
+    const token = await AsyncStorage.getItem('user_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (error) {
+    console.error('[API] Error reading user token from AsyncStorage:', error);
   }
   return config;
 });
