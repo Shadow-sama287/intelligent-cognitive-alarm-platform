@@ -133,3 +133,23 @@ def re_ring_alarm(
             "status": session["status"]
         }
     )
+
+
+@router.get("/active", response_model=ResponseModel[dict | None])
+def get_active_snooze(current_user: User = Depends(get_current_user)):
+    """
+    Returns the active snoozed session for the current user along with remaining TTL.
+    """
+    try:
+        keys = redis_client.r.keys("session:*")
+        for key in keys:
+            session_id = key.replace("session:", "")
+            session = redis_client.get_session(session_id)
+            if session and session.get("user_id") == str(current_user.id) and session.get("status") == AlarmState.SNOOZED.value:
+                ttl = redis_client.r.ttl(key)
+                session["ttl_seconds"] = max(0, ttl)
+                return ResponseModel(message="Active snoozed session found", data=session)
+    except Exception as e:
+        logger.error(f"Error checking active snooze session: {e}")
+    
+    return ResponseModel(message="No active snoozed session", data=None)

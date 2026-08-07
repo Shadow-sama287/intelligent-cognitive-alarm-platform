@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Award, Lightbulb, CheckCircle, TrendingUp, Calendar, Zap, AlertCircle, Clock, Brain, Grid, Sparkles } from "lucide-react";
+import { Award, Lightbulb, CheckCircle, TrendingUp, Calendar, Zap, AlertCircle, Clock, Brain, Grid, Sparkles, FileText, Download } from "lucide-react";
 import { apiClient } from "../api/client";
 
 export const AnalyticsPage = () => {
@@ -10,6 +10,38 @@ export const AnalyticsPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [timeframeDays, setTimeframeDays] = useState(14);
+
+  const handleExportPDF = async () => {
+    try {
+      const response = await apiClient.get('/reports/export/pdf', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sleep_summary_report.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('PDF export failed', err);
+      alert('Failed to export PDF report.');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await apiClient.get('/reports/export/excel', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sleep_habit_report.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Excel export failed', err);
+      alert('Failed to export Excel report.');
+    }
+  };
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -81,21 +113,39 @@ export const AnalyticsPage = () => {
           </p>
         </div>
 
-        {/* Timeframe Selector */}
-        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-xs">
-          {[7, 14, 30, 60].map((d) => (
-            <button
-              key={d}
-              onClick={() => setTimeframeDays(d)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                timeframeDays === d
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              {d} Days
-            </button>
-          ))}
+        {/* Action Controls & Export Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-all"
+          >
+            <FileText className="w-4 h-4" />
+            Export PDF
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+
+          {/* Timeframe Selector */}
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1 shadow-xs">
+            {[7, 14, 30, 60].map((d) => (
+              <button
+                key={d}
+                onClick={() => setTimeframeDays(d)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  timeframeDays === d
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                {d} Days
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
