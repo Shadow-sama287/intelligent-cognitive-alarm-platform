@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native";
 import { Audio } from "expo-av";
 import { mobileApi } from "../services/api";
+import SnoozePenaltyBanner from "./AntiSnoozeScreen";
 
 export default function RingerScreen({ visible, sessionData, onDismissSuccess, stopSoundExternally }) {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [snoozing, setSnoozing] = useState(false);
   const [localSound, setLocalSound] = useState(null);
 
   // Play alarm sound locally ONLY IF no external sound controller is provided
@@ -69,6 +71,52 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
 
   if (!sessionData) return null;
   const challenge = sessionData.challenge;
+
+  const handleSnooze = async () => {
+    try {
+      setSnoozing(true);
+      await stopSound();
+
+      if (sessionData.is_local || !sessionData.session_id) {
+        Alert.alert("Alarm Snoozed", "Alarm snoozed for 5 minutes. Get ready!");
+        setAnswer("");
+        if (onDismissSuccess) {
+          onDismissSuccess();
+        }
+        return;
+      }
+
+      // Online Backend Snooze with DDA penalty
+      const response = await mobileApi.post("/sessions/snooze", null, {
+        params: { session_id: sessionData.session_id }
+      });
+
+      const message = response.data?.message || "Alarm snoozed successfully!";
+      Alert.alert("Alarm Snoozed", message);
+
+      setAnswer("");
+      if (onDismissSuccess) {
+        onDismissSuccess();
+      }
+    } catch (error) {
+      console.error("Snooze Error:", error.response?.data || error);
+      const detail = error.response?.data?.detail || "Unable to snooze alarm.";
+      
+      // If backend session expired in Redis, fallback gracefully to local snooze
+      if (error.response?.status === 404 && detail.includes("Session expired")) {
+        Alert.alert("Alarm Snoozed", "Alarm snoozed for 5 minutes. Get ready!");
+        setAnswer("");
+        if (onDismissSuccess) {
+          onDismissSuccess();
+        }
+        return;
+      }
+
+      Alert.alert("Snooze Denied", detail);
+    } finally {
+      setSnoozing(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
@@ -153,6 +201,14 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
         <View style={styles.content}>
           <Text style={styles.title}>⏰ Wake Up!</Text>
           <Text style={styles.subtitle}>Solve the challenge to dismiss the alarm</Text>
+
+          {sessionData?.snooze_count > 0 && (
+            <SnoozePenaltyBanner
+              snoozeCount={sessionData.snooze_count}
+              currentDifficulty={sessionData.difficulty || challenge?.difficulty || "hard"}
+              timeLimitSeconds={sessionData.time_penalty_seconds || sessionData.time_limit_seconds || 30}
+            />
+          )}
           
           <View style={styles.challengeBox}>
             <Text style={styles.challengeText}>
@@ -169,13 +225,23 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
             autoFocus
           />
 
-          <TouchableOpacity
-            style={[styles.button, loading && { opacity: 0.7 }]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>{loading ? "Verifying..." : "Submit"}</Text>
-          </TouchableOpacity>
+          <View style={styles.actionContainer}>
+            <TouchableOpacity
+              style={[styles.button, (loading || snoozing) && { opacity: 0.7 }]}
+              onPress={handleSubmit}
+              disabled={loading || snoozing}
+            >
+              <Text style={styles.buttonText}>{loading ? "Verifying..." : "Submit Answer"}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.snoozeButton, (loading || snoozing) && { opacity: 0.7 }]}
+              onPress={handleSnooze}
+              disabled={loading || snoozing}
+            >
+              <Text style={styles.snoozeButtonText}>{snoozing ? "Snoozing..." : "💤 Snooze (5 min)"}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </Modal>
@@ -186,10 +252,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFC", justifyContent: "center" },
   content: { padding: 24, alignItems: "center" },
   title: { fontSize: 34, fontWeight: "bold", marginBottom: 10 },
-  subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 40 },
-  challengeBox: { width: "100%", padding: 25, borderRadius: 16, backgroundColor: "#fff", elevation: 3, marginBottom: 30 },
+  subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 30 },
+  challengeBox: { width: "100%", padding: 25, borderRadius: 16, backgroundColor: "#fff", elevation: 3, marginBottom: 25 },
   challengeText: { fontSize: 28, fontWeight: "600", textAlign: "center" },
-  input: { width: "100%", borderWidth: 1, borderColor: "#ccc", borderRadius: 12, padding: 15, fontSize: 22, textAlign: "center", backgroundColor: "#fff", marginBottom: 30 },
+  input: { width: "100%", borderWidth: 1, borderColor: "#ccc", borderRadius: 12, padding: 15, fontSize: 22, textAlign: "center", backgroundColor: "#fff", marginBottom: 25 },
+  actionContainer: { width: "100%", gap: 12 },
   button: { width: "100%", backgroundColor: "#2563EB", padding: 16, borderRadius: 12, alignItems: "center" },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 18 },
+  snoozeButton: { width: "100%", backgroundColor: "#FFF7ED", borderWidth: 1.5, borderColor: "#F59E0B", padding: 15, borderRadius: 12, alignItems: "center" },
+  snoozeButtonText: { color: "#D97706", fontWeight: "bold", fontSize: 17 },
 });

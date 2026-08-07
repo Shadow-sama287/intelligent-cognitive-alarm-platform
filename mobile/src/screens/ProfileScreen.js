@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { mobileApi } from "../services/api";
 
 // Full curated IANA timezone list for the dropdown
@@ -44,7 +45,7 @@ const TIMEZONES = [
 ];
 
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }) {
   const [profile, setProfile] = useState({
     preferred_wake_time: "07:00",
     target_sleep_hours: "8",
@@ -97,6 +98,40 @@ export default function ProfileScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to log out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("user_token");
+              const parent = navigation?.getParent ? navigation.getParent() : null;
+              if (parent) {
+                parent.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              } else if (navigation?.reset) {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                });
+              }
+            } catch (err) {
+              console.error("Logout error:", err);
+              Alert.alert("Error", "Failed to log out. Please try again.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -199,6 +234,13 @@ export default function ProfileScreen() {
               <Text style={styles.saveButtonText}>Save Changes</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Log Out</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -277,6 +319,21 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  logoutButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1.5,
+    borderColor: "#dc2626",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 15,
+    marginBottom: 30,
+  },
+  logoutButtonText: {
+    color: "#dc2626",
     fontSize: 16,
     fontWeight: "bold",
   },

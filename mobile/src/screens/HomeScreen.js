@@ -1,10 +1,12 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, FlatList, StyleSheet, Switch } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { mobileApi } from "../services/api";
 
 export default function HomeScreen() {
   const [alarms, setAlarms] = useState([]);
+  const [snoozedSession, setSnoozedSession] = useState(null);
+  const [ttlSeconds, setTtlSeconds] = useState(0);
 
   const loadAlarms = async () => {
     try {
@@ -15,11 +17,50 @@ export default function HomeScreen() {
     }
   };
 
+  const checkSnoozedSession = async () => {
+    try {
+      const res = await mobileApi.get("/sessions/active");
+      if (res.data?.data && res.data.data.status === "snoozed") {
+        setSnoozedSession(res.data.data);
+        setTtlSeconds(res.data.data.ttl_seconds || 300);
+      } else {
+        setSnoozedSession(null);
+        setTtlSeconds(0);
+      }
+    } catch (e) {
+      setSnoozedSession(null);
+      setTtlSeconds(0);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       loadAlarms();
+      checkSnoozedSession();
     }, [])
   );
+
+  // Live 1-second interval countdown for TTL timer
+  useEffect(() => {
+    if (!snoozedSession || ttlSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setTtlSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          checkSnoozedSession();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [snoozedSession, ttlSeconds]);
+
+  const formatTtl = (sec) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   const toggleSwitch = async (id) => {
     try {
@@ -33,6 +74,20 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>My Dashboard</Text>
+
+      {snoozedSession && (
+        <View style={styles.snoozeBanner}>
+          <View style={styles.snoozeBannerHeader}>
+            <Text style={styles.snoozeBannerTitle}>💤 Alarm Snoozed</Text>
+            <View style={styles.ttlBadge}>
+              <Text style={styles.ttlBadgeText}>⏱ {formatTtl(ttlSeconds)}</Text>
+            </View>
+          </View>
+          <Text style={styles.snoozeBannerSub}>
+            Snooze limit: ({snoozedSession.snooze_count || 1}/3) • Re-rings at {(snoozedSession.difficulty || 'expert').toUpperCase()} level
+          </Text>
+        </View>
+      )}
 
       {alarms.length === 0 ? (
         <Text style={styles.emptyText}>You have no alarms set. Go to the Alarms tab to add one!</Text>
@@ -71,6 +126,46 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     color: "#333",
+  },
+  snoozeBanner: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  snoozeBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  snoozeBannerTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#D97706',
+  },
+  ttlBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  ttlBadgeText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  snoozeBannerSub: {
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '500',
   },
   card: {
     padding: 18,
