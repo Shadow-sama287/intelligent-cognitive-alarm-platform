@@ -142,6 +142,9 @@ class HabitScoringService:
     def calculate_habit_score(user_id: UUID) -> dict:
         db: Session = SessionLocal()
         try:
+            # 0. Streak Days
+            streak_days = HabitScoringService.calculate_streak_days(db, user_id)
+
             # 1. Real Dynamic Wake-Up Consistency (35%)
             wake_up_consistency = HabitScoringService.calculate_wake_up_consistency(db, user_id)
 
@@ -158,22 +161,21 @@ class HabitScoringService:
             snooze_penalty = max(
                 0.0,
                 100.0 - (float(avg_snoozes) * 15)
-)
+            )
 
-            # 3. Challenge Speed (20%)
-            avg_speed = db.query(
-                func.avg(SolveTelemetry.solve_time_seconds)
-            ).filter(
+            # 3. Challenge Success Rate (20%)
+            total_telemetry = db.query(func.count(SolveTelemetry.id)).filter(
                 SolveTelemetry.user_id == user_id
-            ).scalar()
+            ).scalar() or 0
 
-            if avg_speed is None:
-                challenge_speed = 100.0
+            if total_telemetry == 0:
+                challenge_success_rate = 100.0
             else:
-                challenge_speed = max(
-                    0.0,
-                    100.0 - (float(avg_speed) / 3)
-                )
+                successful_solves = db.query(func.count(SolveTelemetry.id)).filter(
+                    SolveTelemetry.user_id == user_id,
+                    SolveTelemetry.attempts <= 3
+                ).scalar() or total_telemetry
+                challenge_success_rate = min(100.0, max(0.0, (float(successful_solves) / float(total_telemetry)) * 100.0))
 
             # 4. Goal Adherence (20%)
             goal_adherence = HabitScoringService.calculate_sleep_adherence(
@@ -183,21 +185,22 @@ class HabitScoringService:
 
             # Final Weighted Calculation
             habit_score = round(
-            (0.35 * wake_up_consistency) +
-            (0.25 * snooze_penalty) +
-            (0.20 * challenge_speed) +
-            (0.20 * goal_adherence),
-            1
-        )
+                (0.35 * wake_up_consistency) +
+                (0.25 * snooze_penalty) +
+                (0.20 * challenge_success_rate) +
+                (0.20 * goal_adherence),
+                1
+            )
 
             return {
                 "habit_score": habit_score,
+                "streak_days": streak_days,
                 "breakdown": {
-                "wake_consistency": wake_up_consistency,
-                "avg_snoozes": round(float(avg_snoozes), 1),
-                "snooze_penalty": round(snooze_penalty, 1),
-                "challenge_speed": round(challenge_speed, 1),
-                "goal_adherence": goal_adherence
+                    "wake_consistency": wake_up_consistency,
+                    "avg_snoozes": round(float(avg_snoozes), 1),
+                    "snooze_penalty": round(snooze_penalty, 1),
+                    "success_rate": round(challenge_success_rate, 1),
+                    "goal_adherence": goal_adherence
                 }
             }
         finally:

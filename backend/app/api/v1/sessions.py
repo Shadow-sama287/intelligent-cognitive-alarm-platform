@@ -84,6 +84,9 @@ def start_alarm_session(alarm_id: str, category: str = "math", current_user: Use
         "start_time": time.time(),
         "time_limit_seconds": challenge.get("time_limit_seconds", 60),
         "attempts": 0,
+        "snooze_count": 0,
+        "required_streak": 1,
+        "current_streak": 0,
         "status": AlarmState.RINGING.value,
         # Fields needed for performance logging in verify.py
         "category": category,

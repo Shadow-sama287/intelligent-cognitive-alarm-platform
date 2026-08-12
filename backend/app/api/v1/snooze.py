@@ -50,6 +50,8 @@ def snooze_alarm(session_id: str, current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Snooze limit reached! You MUST solve the challenge now.")
 
     session["snooze_count"] = snooze_count
+    session["required_streak"] = snooze_count + 1
+    session["current_streak"] = 0
     session["status"] = AlarmState.SNOOZED.value
     session["difficulty"] = penalty["new_difficulty"]
     session["time_penalty_seconds"] = penalty["time_penalty_seconds"]
