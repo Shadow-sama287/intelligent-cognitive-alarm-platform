@@ -13,7 +13,17 @@
       "backgroundColor": "#ffffff"
     },
     "plugins": [
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": [
+              "../../node_modules/@notifee/react-native/android/libs"
+            ]
+          }
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true
