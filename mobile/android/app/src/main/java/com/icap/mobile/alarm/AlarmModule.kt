@@ -38,6 +38,14 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
             }
 
             val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    promise.reject("EXACT_ALARM_PERMISSION_DENIED", "Exact alarm permission is not granted")
+                    return
+                }
+            }
+
             val intent = Intent(reactContext, AlarmReceiver::class.java).apply {
                 putExtra("alarm_id", alarmId)
                 putExtra("title", title)
@@ -57,23 +65,33 @@ class AlarmModule(private val reactContext: ReactApplicationContext) :
                 flags
             )
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
-            }
+            val showIntent = PendingIntent.getActivity(
+                reactContext,
+                alarmId.hashCode(),
+                reactContext.packageManager.getLaunchIntentForPackage(reactContext.packageName),
+                flags
+            )
+
+            val clockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, showIntent)
+            alarmManager.setAlarmClock(clockInfo, pendingIntent)
 
             promise.resolve(true)
         } catch (e: Exception) {
             promise.reject("SCHEDULE_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun canScheduleExactAlarms(promise: Promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val alarmManager = reactContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                promise.resolve(alarmManager.canScheduleExactAlarms())
+            } else {
+                promise.resolve(true)
+            }
+        } catch (e: Exception) {
+            promise.reject("PERMISSION_CHECK_ERROR", e.message, e)
         }
     }
 
