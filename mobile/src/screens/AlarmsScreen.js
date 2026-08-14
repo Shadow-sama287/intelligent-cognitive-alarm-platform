@@ -262,13 +262,42 @@ export default function AlarmsScreen() {
               placeholder="e.g. Morning Workout" 
             />
             
-            <Text style={styles.label}>Alarm Time (HH:MM)</Text>
-            <TextInput 
-              style={styles.input} 
-              value={newTime} 
-              onChangeText={setNewTime} 
-              placeholder="07:00" 
-            />
+            <Text style={styles.label}>Alarm Time</Text>
+            <View style={styles.timePickerRow}>
+              <View style={styles.timePickerCol}>
+                <Text style={styles.timePickerSublabel}>Hour</Text>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={newTime.split(":")[0] || "07"}
+                    onValueChange={(h) => {
+                      const mins = newTime.split(":")[1] || "00";
+                      setNewTime(`${h}:${mins}`);
+                    }}
+                  >
+                    {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+                      <Picker.Item key={h} label={h} value={h} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              <Text style={styles.timePickerSeparator}>:</Text>
+              <View style={styles.timePickerCol}>
+                <Text style={styles.timePickerSublabel}>Minute</Text>
+                <View style={styles.pickerWrapper}>
+                  <Picker
+                    selectedValue={newTime.split(":")[1] || "00"}
+                    onValueChange={(m) => {
+                      const hrs = newTime.split(":")[0] || "07";
+                      setNewTime(`${hrs}:${m}`);
+                    }}
+                  >
+                    {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                      <Picker.Item key={m} label={m} value={m} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </View>
             
             <Text style={styles.label}>Days of Week</Text>
             <View style={styles.daysRow}>
@@ -515,5 +544,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 15,
+  },
+  timePickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  timePickerCol: {
+    flex: 1,
+  },
+  timePickerSublabel: {
+    fontSize: 11,
+    color: "#777",
+    textAlign: "center",
+    marginBottom: 2,
+    fontWeight: "600",
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    backgroundColor: "#fafafa",
+    overflow: "hidden",
+  },
+  timePickerSeparator: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginHorizontal: 8,
+    marginTop: 14,
+    color: "#333",
   },
 });

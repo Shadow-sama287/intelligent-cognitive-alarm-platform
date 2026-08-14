@@ -17,6 +17,8 @@ from app.services.challenge_service import challenge_service
 from app.services.telemetry_service import telemetry_service
 from app.services.progression_service import progression_service
 
+from app.services.generators.fallback_gen import fallback_gen
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -59,7 +61,6 @@ def verify_challenge_answer(
     # --- Time Penalty Check ---
     time_penalty = session.get("time_penalty_seconds", 0)
     if evaluator_service.is_time_expired(session, time_penalty):
-        # Time expired — regenerate a NEW challenge at the same difficulty, reset timer
         difficulty = session.get("difficulty", "medium")
         category = session.get("category", "math")
 
@@ -81,7 +82,6 @@ def verify_challenge_answer(
         if not new_challenge:
             raise HTTPException(status_code=500, detail="Failed to regenerate challenge after timeout")
 
-        # Update session with new challenge and reset timer
         session["challenge_id"] = new_challenge["_id"]
         session["correct_answer"] = str(new_challenge["correct_answer"]).strip().lower()
         session["start_time"] = time.time()
@@ -90,7 +90,6 @@ def verify_challenge_answer(
         session["attempts"] = 0
         redis_client.set_session(payload.session_id, session, ttl_seconds=300)
 
-        # Sanitize payload (remove answer)
         challenge_payload = {k: v for k, v in new_challenge.items() if k != "correct_answer"}
 
         return ResponseModel(
@@ -116,10 +115,10 @@ def verify_challenge_answer(
     solve_time = round(time.time() - session["start_time"], 2)
 
     if is_correct:
-        # Transition state: RINGING → SOLVED
-        AlarmStateMachine.transition(AlarmState.RINGING, AlarmState.SOLVED)
+        current_streak = session.get("current_streak", 0) + 1
+        required_streak = session.get("required_streak", 1)
 
-        # Persist performance data to PostgreSQL before clearing session
+        # Log history & telemetry for this solve
         history_entry = UserChallengeHistory(
             user_id=str(current_user.id),
             category=session.get("category", "unknown"),
@@ -140,22 +139,72 @@ def verify_challenge_answer(
             attempts=session["attempts"],
             snooze_count=session.get("snooze_count", 0)
         )
-        # Adaptive difficulty progression
-        new_diff = progression_service.evaluate_and_update_user_difficulty(
-    db,
-    current_user.id
-)
-        redis_client.delete_session(payload.session_id)  # Alarm dismissed!
-        return ResponseModel(
-            message="Challenge solved successfully! Alarm dismissed.",
-            data=VerifyAnswerResponse(
-                is_correct=True,
-                time_taken_seconds=solve_time,
-                attempts=session["attempts"],
-                session_cleared=True,
-                status=AlarmState.SOLVED.value
+
+        if current_streak < required_streak:
+            # Streak incomplete — generate next challenge step
+            session["current_streak"] = current_streak
+            difficulty = session.get("difficulty", "medium")
+            category = session.get("category", "math")
+
+            new_challenge = None
+            try:
+                new_challenge = llm_gen.generate(
+                    db=db, user_id=str(current_user.id),
+                    difficulty=difficulty, category=category
+                )
+                new_challenge["_id"] = f"gen-{uuid.uuid4()}"
+            except Exception as e:
+                logger.error(f"Failed to generate challenge on streak step: {e}")
+
+            if not new_challenge:
+                new_challenge = challenge_service.get_random_challenge(
+                    category=category, difficulty=difficulty
+                )
+
+            if not new_challenge:
+                if category == "math":
+                    new_challenge = fallback_gen.generate_math(difficulty)
+                else:
+                    new_challenge = fallback_gen.generate_logic(difficulty)
+                new_challenge["_id"] = f"fallback-{uuid.uuid4()}"
+
+            session["challenge_id"] = new_challenge["_id"]
+            session["correct_answer"] = str(new_challenge["correct_answer"]).strip().lower()
+            session["start_time"] = time.time()
+            session["time_limit_seconds"] = new_challenge.get("time_limit_seconds", 60)
+            session["prompt"] = new_challenge.get("prompt", new_challenge.get("question", ""))
+            session["attempts"] = 0
+            redis_client.set_session(payload.session_id, session, ttl_seconds=300)
+
+            challenge_payload = {k: v for k, v in new_challenge.items() if k != "correct_answer"}
+
+            remaining = required_streak - current_streak
+            return ResponseModel(
+                message=f"Step {current_streak}/{required_streak} solved! Solve {remaining} more challenge(s) to dismiss the alarm.",
+                data=VerifyAnswerResponse(
+                    is_correct=True,
+                    time_taken_seconds=solve_time,
+                    attempts=0,
+                    session_cleared=False,
+                    new_challenge=challenge_payload,
+                    status=session["status"]
+                )
             )
-        )
+        else:
+            # Full streak completed! Alarm dismissed.
+            AlarmStateMachine.transition(AlarmState.RINGING, AlarmState.SOLVED)
+            progression_service.evaluate_and_update_user_difficulty(db, current_user.id)
+            redis_client.delete_session(payload.session_id)
+            return ResponseModel(
+                message="All streak challenges solved! Alarm dismissed.",
+                data=VerifyAnswerResponse(
+                    is_correct=True,
+                    time_taken_seconds=solve_time,
+                    attempts=session["attempts"],
+                    session_cleared=True,
+                    status=AlarmState.SOLVED.value
+                )
+            )
     else:
         # Update attempts in Redis
         redis_client.set_session(payload.session_id, session)
