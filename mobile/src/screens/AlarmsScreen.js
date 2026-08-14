@@ -13,6 +13,7 @@ import {
   triggerTestAlarm,
   startRedisSessionForAlarm,
 } from "../services/notificationService";
+import { useTheme, spacing, radius, cardActiveGlow } from "../theme";
 
 const DAYS_OPTIONS = [
   { label: 'M', value: 'MON' },
@@ -25,6 +26,8 @@ const DAYS_OPTIONS = [
 ];
 
 export default function AlarmsScreen() {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [alarms, setAlarms] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAlarmId, setEditingAlarmId] = useState(null);
@@ -162,10 +165,16 @@ export default function AlarmsScreen() {
           alarm_id: alarm.id,
           category: alarm.challenge_category,
         },
-        timeout: 3000,
+        timeout: 10000,
       });
 
-      setSessionData(response.data.data);
+      // Thread alarm fields into sessionData so RingerScreen can build snooze notification object (Q2 fix)
+      setSessionData({
+        ...response.data.data,
+        alarm_id: alarm.id,
+        alarm_title: alarm.title,
+        category: alarm.challenge_category,
+      });
       setRingerVisible(true);
     } catch (error) {
       console.log("[AlarmSession] Online session unavailable/offline. Generating local challenge fallback:", error?.message);
@@ -180,6 +189,9 @@ export default function AlarmsScreen() {
         session_id: `local-session-${Date.now()}`,
         is_local: true,
         challenge: localChallenge,
+        alarm_id: alarm.id,
+        alarm_title: alarm.title,
+        category: alarm.challenge_category,
       });
       setRingerVisible(true);
     }
@@ -215,7 +227,7 @@ export default function AlarmsScreen() {
         data={alarms}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View style={[styles.card, item.is_active && cardActiveGlow]}>
             <View style={styles.cardContent}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.time}>{item.alarm_time}</Text>
@@ -237,7 +249,8 @@ export default function AlarmsScreen() {
               <Switch
                 value={item.is_active}
                 onValueChange={() => toggleSwitch(item.id)}
-                trackColor={{ false: "#ccc", true: "#007BFF" }}
+                trackColor={{ false: colors.outlineVariant, true: colors.primary }}
+                thumbColor={item.is_active ? colors.onPrimary : colors.onSurfaceVariant}
               />
             </View>
           </View>
@@ -352,62 +365,63 @@ export default function AlarmsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#f8f9fa",
+    padding: spacing.md,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: spacing.md,
   },
   heading: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#333",
+    color: colors.onSurface,
   },
   headerButtons: {
     flexDirection: "row",
     alignItems: "center",
   },
   testHeaderBtn: {
-    backgroundColor: "#ffc107",
+    backgroundColor: colors.amberAccent,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     marginRight: 8,
   },
   testHeaderBtnText: {
-    color: "#212529",
+    color: colors.inverseOnSurface,
     fontWeight: "bold",
     fontSize: 13,
   },
   addButton: {
-    backgroundColor: "#007BFF",
+    backgroundColor: colors.primaryContainer,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: radius.sm,
   },
   addButtonText: {
-    color: "#fff",
+    color: colors.onPrimary,
     fontWeight: "bold",
   },
   card: {
     padding: 18,
-    backgroundColor: "#fff",
+    backgroundColor: colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 12,
+    borderColor: colors.outlineVariant,
+    borderRadius: radius.md,
     marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.15,
     shadowRadius: 3.84,
     elevation: 2,
   },
@@ -422,11 +436,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: radius.sm,
   },
   editBtnText: {
-    color: "#333",
+    color: colors.onSurface,
     fontWeight: "600",
     fontSize: 14,
   },
@@ -434,11 +448,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#d4edda",
-    borderRadius: 6,
+    backgroundColor: colors.tertiaryContainer,
+    borderRadius: radius.sm,
   },
   testBtnText: {
-    color: "#155724",
+    color: colors.onTertiaryContainer,
     fontWeight: "600",
     fontSize: 14,
   },
@@ -446,67 +460,71 @@ const styles = StyleSheet.create({
     marginRight: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#fee",
-    borderRadius: 6,
+    backgroundColor: colors.errorContainer,
+    borderRadius: radius.sm,
   },
   deleteBtnText: {
-    color: "#d9534f",
+    color: colors.onErrorContainer,
     fontWeight: "600",
     fontSize: 14,
   },
   title: {
     fontSize: 16,
-    color: "#555",
+    color: colors.onSurfaceVariant,
     marginBottom: 4,
   },
   time: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#222",
+    color: colors.onSurface,
   },
   subText: {
     fontSize: 12,
-    color: "#888",
+    color: colors.onSurfaceVariant,
     marginTop: 4,
     fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 20,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    padding: spacing.md,
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.surfaceContainer,
     padding: 22,
-    borderRadius: 16,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 20,
-    color: "#333",
+    color: colors.onSurface,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#555",
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurfaceVariant,
     marginBottom: 6,
     marginTop: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: colors.outlineVariant,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     fontSize: 16,
-    color: "#333",
-    backgroundColor: "#fafafa",
+    color: colors.onSurface,
+    backgroundColor: colors.surfaceContainerLow,
   },
   daysRow: {
     flexDirection: "row",
@@ -516,27 +534,27 @@ const styles = StyleSheet.create({
   dayBubble: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: "#eee",
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceContainerHigh,
     justifyContent: "center",
     alignItems: "center",
   },
   dayBubbleSelected: {
-    backgroundColor: "#007BFF",
+    backgroundColor: colors.primaryContainer,
   },
   dayText: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#666",
+    color: colors.onSurfaceVariant,
   },
   dayTextSelected: {
-    color: "#fff",
+    color: colors.onPrimary,
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#fafafa",
+    borderColor: colors.outlineVariant,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceContainerLow,
     overflow: "hidden",
     marginBottom: 20,
   },
@@ -556,16 +574,18 @@ const styles = StyleSheet.create({
   },
   timePickerSublabel: {
     fontSize: 11,
-    color: "#777",
+    color: colors.onSurfaceVariant,
     textAlign: "center",
     marginBottom: 2,
     fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    backgroundColor: "#fafafa",
+    borderColor: colors.outlineVariant,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceContainerLow,
     overflow: "hidden",
   },
   timePickerSeparator: {
@@ -573,6 +593,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginHorizontal: 8,
     marginTop: 14,
-    color: "#333",
+    color: colors.onSurface,
   },
 });
+}

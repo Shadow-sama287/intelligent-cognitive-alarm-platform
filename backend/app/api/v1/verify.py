@@ -1,3 +1,4 @@
+import re
 import time
 import uuid
 import logging
@@ -21,6 +22,24 @@ from app.services.generators.fallback_gen import fallback_gen
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def normalize_answer(ans: str) -> str:
+    """Fuzzy normalization for answer comparison.
+    
+    Strips leading/trailing punctuation, removes leading articles (a/an/the),
+    and normalizes numeric strings ("12.0" -> "12") to reduce false negatives
+    caused by LLM-generated answer formatting.
+    """
+    ans = ans.strip().lower()
+    ans = re.sub(r'^[^\w\s]+|[^\w\s]+$', '', ans)  # strip leading/trailing punctuation
+    ans = re.sub(r'^(a|an|the)\s+', '', ans)         # strip leading articles
+    try:
+        as_float = float(ans)
+        ans = str(int(as_float)) if as_float == int(as_float) else str(as_float)
+    except ValueError:
+        pass
+    return ans.strip()
 
 class VerifyAnswerRequest(BaseModel):
     session_id: str
@@ -108,8 +127,8 @@ def verify_challenge_answer(
 
     # --- Normal Answer Verification ---
     session["attempts"] += 1
-    submitted = payload.user_answer.strip().lower()
-    expected = session["correct_answer"].strip().lower()
+    submitted = normalize_answer(payload.user_answer)
+    expected  = normalize_answer(session["correct_answer"])
 
     is_correct = (submitted == expected)
     solve_time = round(time.time() - session["start_time"], 2)

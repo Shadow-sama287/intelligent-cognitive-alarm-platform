@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Award, Lightbulb, CheckCircle, TrendingUp, Calendar, Zap, AlertCircle, Clock, Brain, Grid, Sparkles, FileText, Download } from "lucide-react";
+import { Award, Lightbulb, CheckCircle, TrendingUp, Calendar, Zap, AlertCircle, Clock, Brain, Grid, Sparkles, FileText, Download, Loader2 } from "lucide-react";
 import { apiClient } from "../api/client";
 
 export const AnalyticsPage = () => {
@@ -10,8 +10,11 @@ export const AnalyticsPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [timeframeDays, setTimeframeDays] = useState(14);
+  const [exportPdfLoading, setExportPdfLoading] = useState(false);
+  const [exportExcelLoading, setExportExcelLoading] = useState(false);
 
   const handleExportPDF = async () => {
+    setExportPdfLoading(true);
     try {
       const response = await apiClient.get('/reports/export/pdf', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -24,10 +27,13 @@ export const AnalyticsPage = () => {
     } catch (err) {
       console.error('PDF export failed', err);
       alert('Failed to export PDF report.');
+    } finally {
+      setExportPdfLoading(false);
     }
   };
 
   const handleExportExcel = async () => {
+    setExportExcelLoading(true);
     try {
       const response = await apiClient.get('/reports/export/excel', { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
@@ -40,6 +46,8 @@ export const AnalyticsPage = () => {
     } catch (err) {
       console.error('Excel export failed', err);
       alert('Failed to export Excel report.');
+    } finally {
+      setExportExcelLoading(false);
     }
   };
 
@@ -117,17 +125,27 @@ export const AnalyticsPage = () => {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition-all"
+            disabled={exportPdfLoading}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition-all"
           >
-            <FileText className="w-4 h-4" />
-            Export PDF
+            {exportPdfLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            {exportPdfLoading ? "Generating..." : "Export PDF"}
           </button>
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-all"
+            disabled={exportExcelLoading}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition-all"
           >
-            <Download className="w-4 h-4" />
-            Export Excel
+            {exportExcelLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {exportExcelLoading ? "Generating..." : "Export Excel"}
           </button>
 
           {/* Timeframe Selector */}
