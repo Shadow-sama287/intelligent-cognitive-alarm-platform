@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { mobileApi } from "../services/api";
+import { colors, spacing, radius } from "../theme";
 
 export default function RegisterScreen({ navigation }) {
   const [fullName, setFullName] = useState("");
@@ -30,12 +31,14 @@ export default function RegisterScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Full Name"
+        placeholderTextColor={colors.onSurfaceVariant}
         value={fullName}
         onChangeText={setFullName}
       />
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={colors.onSurfaceVariant}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -44,13 +47,14 @@ export default function RegisterScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor={colors.onSurfaceVariant}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Register" onPress={register} />
+      <Button title="Register" onPress={register} color={colors.primaryContainer} />
       <View style={styles.spacer} />
-      <Button title="Back to Login" onPress={() => navigation.navigate("Login")} type="clear" />
+      <Button title="Back to Login" onPress={() => navigation.navigate("Login")} color={colors.onSurfaceVariant} />
     </View>
   );
 }
@@ -59,22 +63,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.lg,
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: spacing.lg,
     textAlign: "center",
+    color: colors.onSurface,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
+    borderColor: colors.outlineVariant,
+    padding: 12,
     marginBottom: 15,
-    borderRadius: 5,
+    borderRadius: radius.sm,
+    color: colors.onSurface,
+    backgroundColor: colors.surfaceContainerLow,
   },
   spacer: {
     height: 10,
   },
 });
+

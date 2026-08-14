@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, TextInput, SafeAreaView,
   TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform,
-  ActivityIndicator,
+  ActivityIndicator, Switch,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { mobileApi } from "../services/api";
+import { useTheme, spacing, radius } from "../theme";
 
 // Full curated IANA timezone list for the dropdown
 const TIMEZONES = [
@@ -44,8 +45,18 @@ const TIMEZONES = [
   "Pacific/Tahiti", "Pacific/Tongatapu",
 ];
 
+const DIFFICULTY_LABELS = {
+  beginner: { label: "Beginner 🌱", color: "#87a878" },
+  easy:     { label: "Easy ✅", color: "#87a878" },
+  medium:   { label: "Medium ⚡", color: "#f59e0b" },
+  hard:     { label: "Hard 🔥", color: "#fb7185" },
+  expert:   { label: "Expert 💀", color: "#ffb4ab" },
+};
 
 export default function ProfileScreen({ navigation }) {
+  const { colors, isDark, toggleTheme } = useTheme();
+  const s = makeStyles(colors);
+
   const [profile, setProfile] = useState({
     preferred_wake_time: "07:00",
     target_sleep_hours: "8",
@@ -56,7 +67,6 @@ export default function ProfileScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Fetch current profile from backend on mount to pre-populate the form
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -91,7 +101,7 @@ export default function ProfileScreen({ navigation }) {
         target_sleep_hours: parseFloat(profile.target_sleep_hours) || 8,
       };
       await mobileApi.put("/profile", payload);
-      Alert.alert("Success", "Profile saved successfully!");
+      Alert.alert("✅ Saved", "Profile updated successfully!");
     } catch (err) {
       console.error("Failed to save profile:", err);
       Alert.alert("Error", "Failed to save profile. Please try again.");
@@ -101,240 +111,305 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem("user_token");
-              const parent = navigation?.getParent ? navigation.getParent() : null;
-              if (parent) {
-                parent.reset({
-                  index: 0,
-                  routes: [{ name: "Login" }],
-                });
-              } else if (navigation?.reset) {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: "Login" }],
-                });
-              }
-            } catch (err) {
-              console.error("Logout error:", err);
-              Alert.alert("Error", "Failed to log out. Please try again.");
+    Alert.alert("Logout", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem("user_token");
+            const parent = navigation?.getParent ? navigation.getParent() : null;
+            if (parent) {
+              parent.reset({ index: 0, routes: [{ name: "Login" }] });
+            } else if (navigation?.reset) {
+              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
             }
-          },
+          } catch (err) {
+            Alert.alert("Error", "Failed to log out. Please try again.");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#007BFF" />
-          <Text style={styles.loadingText}>Loading profile…</Text>
+      <SafeAreaView style={s.container}>
+        <View style={s.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={s.loadingText}>Loading profile…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  const diffInfo = DIFFICULTY_LABELS[profile.difficulty_preference] || DIFFICULTY_LABELS.medium;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Profile Settings</Text>
-            <Text style={styles.subtitle}>Manage your wake-up preferences.</Text>
+    <SafeAreaView style={s.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={s.scrollContainer} showsVerticalScrollIndicator={false}>
+
+          {/* ── Hero Header ───────────────────────────────────── */}
+          <View style={s.heroCard}>
+            <View style={s.avatarCircle}>
+              <Text style={s.avatarEmoji}>🧠</Text>
+            </View>
+            <Text style={s.heroTitle}>Your Profile</Text>
+            <Text style={s.heroSub}>Cognitive Alarm Preferences</Text>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Preferred Wake-up Time</Text>
-            <TextInput
-              style={styles.input}
-              value={profile.preferred_wake_time}
-              onChangeText={(val) => handleChange("preferred_wake_time", val)}
-              placeholder="07:00"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Target Sleep Hours</Text>
-            <TextInput
-              style={styles.input}
-              value={profile.target_sleep_hours}
-              onChangeText={(val) => handleChange("target_sleep_hours", val)}
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Time Zone</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={profile.time_zone}
-                onValueChange={(val) => handleChange("time_zone", val)}
-              >
-                {TIMEZONES.map((tz) => (
-                  <Picker.Item
-                    key={tz}
-                    label={tz.replace(/_/g, " ")}
-                    value={tz}
-                  />
-                ))}
-              </Picker>
+          {/* ── Appearance Section ────────────────────────────── */}
+          <View style={s.section}>
+            <Text style={s.sectionLabel}>APPEARANCE</Text>
+            <View style={s.settingRow}>
+              <View style={s.settingRowLeft}>
+                <Text style={s.settingIcon}>{isDark ? "🌙" : "☀️"}</Text>
+                <View>
+                  <Text style={s.settingTitle}>{isDark ? "Dark Mode" : "Light Mode"}</Text>
+                  <Text style={s.settingDesc}>{isDark ? "Lumina Mind dark theme" : "Lumina Analytics light theme"}</Text>
+                </View>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.outlineVariant, true: colors.primaryContainer }}
+                thumbColor={isDark ? colors.onPrimary : colors.outline}
+              />
             </View>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Default Difficulty</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={profile.difficulty_preference}
-                onValueChange={(val) => handleChange("difficulty_preference", val)}
-              >
-                <Picker.Item label="Beginner" value="beginner" />
-                <Picker.Item label="Easy" value="easy" />
-                <Picker.Item label="Medium" value="medium" />
-                <Picker.Item label="Hard" value="hard" />
-                <Picker.Item label="Expert" value="expert" />
-              </Picker>
+          {/* ── Wake-Up Preferences ───────────────────────────── */}
+          <View style={s.section}>
+            <Text style={s.sectionLabel}>WAKE-UP PREFERENCES</Text>
+
+            <View style={s.formGroup}>
+              <Text style={s.label}>⏰ Preferred Wake-up Time</Text>
+              <TextInput
+                style={s.input}
+                value={profile.preferred_wake_time}
+                onChangeText={(val) => handleChange("preferred_wake_time", val)}
+                placeholder="07:00"
+                placeholderTextColor={colors.onSurfaceVariant}
+              />
+            </View>
+
+            <View style={s.formGroup}>
+              <Text style={s.label}>😴 Target Sleep Hours</Text>
+              <TextInput
+                style={s.input}
+                value={profile.target_sleep_hours}
+                onChangeText={(val) => handleChange("target_sleep_hours", val)}
+                keyboardType="numeric"
+                placeholderTextColor={colors.onSurfaceVariant}
+              />
             </View>
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Productivity Goals</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={profile.productivity_goals}
-              onChangeText={(val) => handleChange("productivity_goals", val)}
-              placeholder="e.g. Wake up by 6am, solve 2 challenges daily"
-              multiline
-              numberOfLines={3}
-            />
+          {/* ── Challenge Settings ────────────────────────────── */}
+          <View style={s.section}>
+            <Text style={s.sectionLabel}>CHALLENGE SETTINGS</Text>
+
+            {/* Difficulty pill preview */}
+            <View style={[s.difficultyBadge, { borderColor: diffInfo.color }]}>
+              <Text style={[s.difficultyBadgeText, { color: diffInfo.color }]}>
+                Current: {diffInfo.label}
+              </Text>
+            </View>
+
+            <View style={s.formGroup}>
+              <Text style={s.label}>🎯 Default Difficulty</Text>
+              <View style={s.pickerContainer}>
+                <Picker
+                  selectedValue={profile.difficulty_preference}
+                  onValueChange={(val) => handleChange("difficulty_preference", val)}
+                  dropdownIconColor={colors.onSurface}
+                >
+                  <Picker.Item label="🌱 Beginner" value="beginner" />
+                  <Picker.Item label="✅ Easy" value="easy" />
+                  <Picker.Item label="⚡ Medium" value="medium" />
+                  <Picker.Item label="🔥 Hard" value="hard" />
+                  <Picker.Item label="💀 Expert" value="expert" />
+                </Picker>
+              </View>
+            </View>
+
+            <View style={s.formGroup}>
+              <Text style={s.label}>💬 Productivity Goals</Text>
+              <TextInput
+                style={[s.input, s.textArea]}
+                value={profile.productivity_goals}
+                onChangeText={(val) => handleChange("productivity_goals", val)}
+                placeholder="e.g. Wake up by 6am, solve 2 challenges daily"
+                placeholderTextColor={colors.onSurfaceVariant}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
           </View>
 
+          {/* ── Location / Time Zone ─────────────────────────── */}
+          <View style={s.section}>
+            <Text style={s.sectionLabel}>REGION</Text>
+            <View style={s.formGroup}>
+              <Text style={s.label}>🌍 Time Zone</Text>
+              <View style={s.pickerContainer}>
+                <Picker
+                  selectedValue={profile.time_zone}
+                  onValueChange={(val) => handleChange("time_zone", val)}
+                  dropdownIconColor={colors.onSurface}
+                >
+                  {TIMEZONES.map((tz) => (
+                    <Picker.Item key={tz} label={tz.replace(/_/g, " ")} value={tz} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+          </View>
+
+          {/* ── Actions ──────────────────────────────────────── */}
           <TouchableOpacity
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            style={[s.saveButton, saving && s.saveButtonDisabled]}
             onPress={handleSave}
             disabled={saving}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={styles.saveButtonText}>Save Changes</Text>
+              <Text style={s.saveButtonText}>Save Changes</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutButtonText}>Log Out</Text>
+          <TouchableOpacity style={s.logoutButton} onPress={handleLogout}>
+            <Text style={s.logoutButtonText}>Log Out</Text>
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  loadingText: {
-    color: "#666",
-    fontSize: 14,
-    marginTop: 8,
-  },
-  scrollContainer: {
-    padding: 20,
-  },
-  header: {
-    marginBottom: 25,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 5,
-  },
-  formGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#444",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#333",
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  saveButton: {
-    backgroundColor: "#007BFF",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  saveButtonDisabled: {
-    backgroundColor: "#93c5fd",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  logoutButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1.5,
-    borderColor: "#dc2626",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 15,
-    marginBottom: 30,
-  },
-  logoutButtonText: {
-    color: "#dc2626",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
+function makeStyles(colors) {
+  return StyleSheet.create({
+    container:        { flex: 1, backgroundColor: colors.background },
+    centered:         { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
+    loadingText:      { color: colors.onSurfaceVariant, fontSize: 14, marginTop: 8 },
+    scrollContainer:  { padding: spacing.md, paddingBottom: 40 },
+
+    // Hero
+    heroCard: {
+      alignItems: "center",
+      paddingVertical: spacing.xl,
+      marginBottom: spacing.md,
+    },
+    avatarCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: radius.full,
+      backgroundColor: colors.surfaceContainerHigh,
+      borderWidth: 2,
+      borderColor: colors.primaryContainer,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: spacing.sm,
+      shadowColor: colors.primaryContainer,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 6,
+    },
+    avatarEmoji:  { fontSize: 36 },
+    heroTitle:    { fontSize: 24, fontWeight: "700", color: colors.onSurface, marginBottom: 4 },
+    heroSub:      { fontSize: 13, color: colors.onSurfaceVariant, letterSpacing: 0.5 },
+
+    // Section
+    section: {
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+    },
+    sectionLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: colors.onSurfaceVariant,
+      letterSpacing: 1.2,
+      textTransform: "uppercase",
+      marginBottom: spacing.sm,
+    },
+
+    // Setting row (for toggle)
+    settingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    settingRowLeft:   { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+    settingIcon:      { fontSize: 22 },
+    settingTitle:     { fontSize: 15, fontWeight: "600", color: colors.onSurface },
+    settingDesc:      { fontSize: 12, color: colors.onSurfaceVariant, marginTop: 2 },
+
+    // Difficulty badge
+    difficultyBadge: {
+      alignSelf: "flex-start",
+      borderWidth: 1.5,
+      borderRadius: radius.full,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      marginBottom: spacing.sm,
+    },
+    difficultyBadgeText: { fontSize: 13, fontWeight: "700" },
+
+    // Form
+    formGroup:    { marginBottom: spacing.sm },
+    label:        { fontSize: 13, fontWeight: "600", color: colors.onSurfaceVariant, marginBottom: 6 },
+    input:        {
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      borderRadius: radius.sm,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: colors.onSurface,
+      backgroundColor: colors.surfaceContainer,
+    },
+    textArea:     { minHeight: 80, textAlignVertical: "top" },
+    pickerContainer: {
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surfaceContainer,
+      overflow: "hidden",
+    },
+
+    // Buttons
+    saveButton: {
+      backgroundColor: colors.primaryContainer,
+      paddingVertical: 16,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginBottom: spacing.sm,
+      shadowColor: colors.primaryContainer,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    saveButtonDisabled: { opacity: 0.6 },
+    saveButtonText:     { color: colors.onPrimary, fontSize: 16, fontWeight: "700" },
+    logoutButton: {
+      backgroundColor: "transparent",
+      borderWidth: 1.5,
+      borderColor: colors.error,
+      paddingVertical: 14,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginBottom: 20,
+    },
+    logoutButtonText: { color: colors.error, fontSize: 16, fontWeight: "700" },
+  });
+}

@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native";
 import { Audio } from "expo-av";
 import { mobileApi } from "../services/api";
-import SnoozePenaltyBanner from "./AntiSnoozeScreen";
+import { scheduleSnoozeNotification } from "../services/notificationService";
+import { useTheme, spacing, radius } from "../theme";
 
 export default function RingerScreen({ visible, sessionData, onDismissSuccess, stopSoundExternally }) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [snoozing, setSnoozing] = useState(false);
@@ -94,6 +97,18 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
       const message = response.data?.message || "Alarm snoozed successfully!";
       Alert.alert("Alarm Snoozed", message);
 
+      // Schedule OS-level re-ring trigger for +5 minutes (critical — without this the alarm never re-rings)
+      try {
+        const alarmObj = sessionData?.alarm || {
+          id: sessionData?.alarm_id,
+          title: sessionData?.alarm_title,
+          challenge_category: sessionData?.category,
+        };
+        await scheduleSnoozeNotification(alarmObj, 5);
+      } catch (e) {
+        console.warn('[Snooze] Could not schedule re-ring notification:', e);
+      }
+
       setAnswer("");
       if (onDismissSuccess) {
         onDismissSuccess();
@@ -126,10 +141,17 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
 
     // Handle Local Offline Challenge Verification
     if (sessionData.is_local || challenge?.is_local) {
-      const userAns = answer.trim().toLowerCase();
-      const correctAns = String(challenge?.correct_answer || '').trim().toLowerCase();
+      // Normalize answer to handle LLM formatting quirks (trailing punctuation, articles, float strings)
+      const normalizeAns = (s) => {
+        let v = String(s).trim().toLowerCase()
+          .replace(/^[^\w\s]+|[^\w\s]+$/, '')
+          .replace(/^(a|an|the)\s+/, '');
+        const n = parseFloat(v);
+        if (!isNaN(n)) v = Number.isInteger(n) ? String(n) : String(n);
+        return v.trim();
+      };
 
-      if (userAns === correctAns) {
+      if (normalizeAns(answer) === normalizeAns(challenge?.correct_answer || '')) {
         await stopSound();
         const solveTimeSeconds = Math.round((Date.now() - startTime) / 1000) || 5;
 
@@ -171,18 +193,22 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
 
       const result = response.data.data;
 
-      if (result.is_correct) {
-        await stopSound(); // Stop ringing sound on correct answer
-
+      if (result.is_correct && result.session_cleared) {
+        // Full streak completed — dismiss alarm entirely
+        await stopSound();
         Alert.alert(
-          "Alarm Dismissed!",
-          `Great job! Solved in ${result.time_taken_seconds} seconds.`
+          "Alarm Dismissed! 🎉",
+          `All challenges completed! Solved in ${result.time_taken_seconds}s.`
         );
-
         setAnswer("");
         if (onDismissSuccess) {
           onDismissSuccess();
         }
+      } else if (result.is_correct && !result.session_cleared) {
+        // Streak step N of M complete — load next challenge, keep ringer open
+        Alert.alert("Step Complete! ✅", result.message || "Keep going! Solve the next challenge.");
+        setAnswer("");
+        setSessionData(prev => ({ ...prev, challenge: result.new_challenge }));
       } else {
         setAnswer("");
         Alert.alert("Incorrect", "Wrong answer! Alarm keeps ringing!");
@@ -248,17 +274,54 @@ export default function RingerScreen({ visible, sessionData, onDismissSuccess, s
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC", justifyContent: "center" },
-  content: { padding: 24, alignItems: "center" },
-  title: { fontSize: 34, fontWeight: "bold", marginBottom: 10 },
-  subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 30 },
-  challengeBox: { width: "100%", padding: 25, borderRadius: 16, backgroundColor: "#fff", elevation: 3, marginBottom: 25 },
-  challengeText: { fontSize: 28, fontWeight: "600", textAlign: "center" },
-  input: { width: "100%", borderWidth: 1, borderColor: "#ccc", borderRadius: 12, padding: 15, fontSize: 22, textAlign: "center", backgroundColor: "#fff", marginBottom: 25 },
-  actionContainer: { width: "100%", gap: 12 },
-  button: { width: "100%", backgroundColor: "#2563EB", padding: 16, borderRadius: 12, alignItems: "center" },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 18 },
-  snoozeButton: { width: "100%", backgroundColor: "#FFF7ED", borderWidth: 1.5, borderColor: "#F59E0B", padding: 15, borderRadius: 12, alignItems: "center" },
-  snoozeButtonText: { color: "#D97706", fontWeight: "bold", fontSize: 17 },
-});
+function makeStyles(colors) {
+  return StyleSheet.create({
+    container:       { flex: 1, backgroundColor: colors.background, justifyContent: "center" },
+    content:         { padding: spacing.lg, alignItems: "center" },
+    title:           { fontSize: 34, fontWeight: "bold", marginBottom: 10, color: colors.onSurface },
+    subtitle:        { fontSize: 16, color: colors.onSurfaceVariant, textAlign: "center", marginBottom: 30 },
+    challengeBox:    {
+      width: "100%",
+      padding: 25,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      elevation: 3,
+      marginBottom: 25,
+    },
+    challengeText:   { fontSize: 28, fontWeight: "600", textAlign: "center", color: colors.onSurface },
+    input:           {
+      width: "100%",
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      borderRadius: radius.md,
+      padding: 15,
+      fontSize: 22,
+      textAlign: "center",
+      backgroundColor: colors.surfaceContainer,
+      color: colors.onSurface,
+      marginBottom: 25,
+    },
+    actionContainer: { width: "100%", gap: 12 },
+    button:          {
+      width: "100%",
+      backgroundColor: colors.primaryContainer,
+      padding: 16,
+      borderRadius: radius.md,
+      alignItems: "center",
+    },
+    buttonText:      { color: colors.onPrimary, fontWeight: "bold", fontSize: 18 },
+    snoozeButton:    {
+      width: "100%",
+      backgroundColor: colors.surfaceContainerHigh,
+      borderWidth: 1.5,
+      borderColor: colors.amberAccent,
+      padding: 15,
+      borderRadius: radius.md,
+      alignItems: "center",
+    },
+    snoozeButtonText: { color: colors.amberAccent, fontWeight: "bold", fontSize: 17 },
+  });
+}
+

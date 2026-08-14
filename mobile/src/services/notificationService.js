@@ -171,6 +171,54 @@ export async function cancelAlarmNotification(alarmId) {
 }
 
 /**
+ * Schedules an OS-level Notifee trigger notification to re-ring a snoozed alarm.
+ * Must be called immediately after the /sessions/snooze API call succeeds.
+ * Without this, the alarm goes silent forever after snooze — the OS never re-fires it.
+ *
+ * @param {object} alarm         - Alarm object with id, title, challenge_category
+ * @param {number} snoozeMinutes - Minutes until re-ring (default: 5)
+ * @returns {string} The scheduled notification ID
+ */
+export async function scheduleSnoozeNotification(alarm, snoozeMinutes = 5) {
+  const triggerTime = Date.now() + snoozeMinutes * 60 * 1000;
+  const channelId = await createAlarmChannel();
+  const notificationId = `snooze-${alarm.id}`;
+
+  // Cancel any previous snooze trigger for this alarm first (prevents duplicates)
+  try { await notifee.cancelNotification(notificationId); } catch (_) {}
+
+  await notifee.createTriggerNotification(
+    {
+      id: notificationId,
+      title: `⏰ Snoozed Alarm Ringing! (${alarm.title || 'Wake up!'})`,
+      body: 'Your snooze duration has ended. Complete the challenge now!',
+      data: {
+        alarm_id: String(alarm.id),
+        category: alarm.challenge_category || 'math',
+        type: 'SNOOZE_RE_RING',
+      },
+      android: {
+        channelId,
+        category: AndroidCategory.ALARM,
+        importance: AndroidImportance.HIGH,
+        fullScreenAction: { id: 'default', launchActivity: 'default' },
+        pressAction: { id: 'default', launchActivity: 'default' },
+        ongoing: true,
+        autoCancel: false,
+      },
+    },
+    {
+      type: TriggerType.TIMESTAMP,
+      timestamp: triggerTime,
+      alarmManager: { allowWhileIdle: true },
+    }
+  );
+
+  console.log(`[Notifee] Snooze re-ring scheduled for alarm ${alarm.id} in ${snoozeMinutes} min → ${new Date(triggerTime).toLocaleTimeString()}`);
+  return notificationId;
+}
+
+/**
  * Cancels any displayed or triggered notification by its exact notification ID.
  */
 export async function cancelNotificationById(notificationId) {
@@ -299,7 +347,7 @@ export async function startRedisSessionForAlarm(alarmId, category = 'math') {
         alarm_id: alarmId,
         category: category,
       },
-      timeout: 3000,
+      timeout: 10000,
     });
     return {
       ...res.data.data,
