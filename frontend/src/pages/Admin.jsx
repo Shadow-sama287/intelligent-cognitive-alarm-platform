@@ -53,12 +53,40 @@ export default function Admin() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, usersRes] = await Promise.all([
-        apiClient.get("/admin/stats"),
-        apiClient.get("/admin/users"),
+      const results = await Promise.allSettled([
+        apiClient.get("/admin/dashboard"),
+        apiClient.get("/admin/users-detailed")
       ]);
-      setStats(statsRes.data.data);
-      setUsers(usersRes.data.data || []);
+
+      const [statsRes, usersRes] = results;
+
+      if (statsRes.status === "fulfilled") {
+        const val = statsRes.value?.data;
+        setStats(val?.data || val || {});
+      } else {
+        // Try fallback to /admin/stats
+        try {
+          const fb = await apiClient.get("/admin/stats");
+          setStats(fb.data?.data || fb.data || {});
+        } catch {
+          setStats({});
+        }
+      }
+
+      if (usersRes.status === "fulfilled") {
+        const val = usersRes.value?.data;
+        setUsers(Array.isArray(val) ? val : (val?.data || []));
+      } else {
+        // Fallback to /admin/users
+        try {
+          const fb = await apiClient.get("/admin/users");
+          const val = fb.data?.data || fb.data || [];
+          setUsers(Array.isArray(val) ? val : []);
+        } catch {
+          setUsers([]);
+        }
+      }
+
       setStatus("ready");
     } catch (err) {
       if (err.response?.status === 403) {

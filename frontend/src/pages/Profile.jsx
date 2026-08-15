@@ -59,20 +59,32 @@ export default function Profile() {
 
   const fetchProfileAndCoaches = async () => {
     try {
-      const [profileRes, coachesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         apiClient.get("/profile"),
         apiClient.get("/coach/my-coaches"),
       ]);
-      const data = profileRes.data.data;
-      setProfile({
-        preferred_wake_time: data.preferred_wake_time ?? "07:00",
-        target_sleep_hours: data.target_sleep_hours ?? 8,
-        time_zone:
-          data.time_zone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-        difficulty_preference: data.difficulty_preference ?? "medium",
-        productivity_goals: data.productivity_goals ?? "",
-      });
-      setMyCoaches(coachesRes.data.data || []);
+
+      const [profileRes, coachesRes] = results;
+
+      if (profileRes.status === "fulfilled") {
+        const val = profileRes.value?.data;
+        const data = val?.data || val || {};
+        setProfile({
+          preferred_wake_time: data.preferred_wake_time || data.preferred_wakeup_time || "07:00",
+          target_sleep_hours: data.target_sleep_hours ?? 8,
+          time_zone:
+            data.time_zone || data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          difficulty_preference: data.difficulty_preference ?? "medium",
+          productivity_goals: data.productivity_goals || data.bio || "",
+        });
+      }
+
+      if (coachesRes.status === "fulfilled") {
+        const val = coachesRes.value?.data;
+        setMyCoaches(Array.isArray(val) ? val : (val?.data || []));
+      } else {
+        setMyCoaches([]);
+      }
     } catch (err) {
       console.error("Failed to load profile/coaches:", err);
     } finally {

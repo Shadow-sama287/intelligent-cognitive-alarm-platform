@@ -67,13 +67,24 @@ export default function CoachDashboard() {
   const fetchClients = async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get("/coach/clients");
-      setClients(res.data.data || []);
-      if (res.data.advice_sent_today !== undefined) {
+      let res;
+      try {
+        res = await apiClient.get("/coach/my-users");
+      } catch {
+        try {
+          res = await apiClient.get("/coach/users");
+        } catch {
+          res = await apiClient.get("/coach/clients");
+        }
+      }
+      const val = res?.data?.data || res?.data || [];
+      setClients(Array.isArray(val) ? val : []);
+      if (res?.data?.advice_sent_today !== undefined) {
         setAdviceSentToday(res.data.advice_sent_today);
       }
     } catch (err) {
       console.error("Failed to load coach clients", err);
+      setClients([]);
     } finally {
       setIsLoading(false);
     }
