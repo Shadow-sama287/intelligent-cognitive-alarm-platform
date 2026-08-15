@@ -27,7 +27,6 @@ services:
         sync: false   # Set manually from MongoDB Atlas
       - key: GEMINI_API_KEY
         sync: false   # Set manually
-    preDeployCommand: alembic upgrade head
 
   - type: redis
     name: icap-redis
