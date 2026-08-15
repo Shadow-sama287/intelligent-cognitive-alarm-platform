@@ -138,21 +138,9 @@ export default function Practice() {
     const is_correct = rawAnswer === expected;
 
     if (is_correct) {
-      setToast({ type: "success", message: `Correct! You solved the challenge.` });
-      // Record habit challenge score to backend
-      try {
-        await apiClient.post("/habits/score", {
-          challenge_type: selectedCategory,
-          difficulty: selectedLevel.toLowerCase(),
-          time_taken_seconds: 15,
-          is_correct: true,
-          attempts: 1
-        });
-      } catch {
-        // Non-blocking score recording
-      }
+      setToast({ type: "success", message: `Correct! You solved the practice challenge.` });
     } else {
-      setToast({ type: "error", message: `Incorrect. Expected answer was ${expected}. Try another one!` });
+      setToast({ type: "error", message: `Incorrect. Expected answer was "${expected}". Try another one!` });
     }
 
     return {
