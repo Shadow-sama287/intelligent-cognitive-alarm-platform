@@ -9,10 +9,8 @@ def _build_engine():
     engine = create_engine(
         database_url,
         pool_pre_ping=True,
-        echo=True,
+        echo=False,
     )
-    with engine.connect() as connection:
-        connection.exec_driver_sql("SELECT 1")
     return engine
 
 

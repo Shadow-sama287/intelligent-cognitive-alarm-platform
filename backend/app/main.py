@@ -16,20 +16,18 @@ from app.api.v1.telemetry import router as telemetry_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.coach import router as coach_router
 from app.api.v1.reports import router as reports_router
-from app.db.session import engine, Base
 from app.services.scheduler import start_scheduler
-# Ensure models are imported so SQLAlchemy metadata is populated
-from app.db import base as _models
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=origins if origins else ["*"],
+    allow_credentials=True if origins != ["*"] else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -58,7 +56,5 @@ def root():
 
 @app.on_event("startup")
 def on_startup():
-    # Create DB tables if they don't exist (development convenience)
-    Base.metadata.create_all(bind=engine)
     start_scheduler()
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,6 +10,7 @@ ENV_FILE = BASE_DIR / ".env"
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Intelligent Cognitive Alarm Platform"
     API_V1_STR: str = "/api/v1"
+    DATABASE_URL: Optional[str] = None
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "cognitive_user"
@@ -19,9 +21,17 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    CORS_ORIGINS: str = "*"
+    FIREBASE_CREDENTIALS_PATH: str = "firebase-credentials.json"
+    GEMINI_API_KEY: str = ""
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        if self.DATABASE_URL:
+            url = self.DATABASE_URL
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     model_config = SettingsConfigDict(
@@ -32,5 +42,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-print("DB URI =", settings.SQLALCHEMY_DATABASE_URI)

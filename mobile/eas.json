@@ -16,12 +16,17 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_DOCTOR_ENABLE": "0"
+        "EXPO_DOCTOR_ENABLE": "0",
+        "EXPO_PUBLIC_API_URL": "https://YOUR_RENDER_URL.onrender.com/api/v1"
       },
       "android": {
         "buildType": "apk"
       }
     },
-    "production": {}
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://YOUR_RENDER_URL.onrender.com/api/v1"
+      }
+    }
   }
 }
