@@ -88,27 +88,35 @@ export const AlarmsPage = () => {
   const fetchAlarms = async () => {
     try {
       const res = await apiClient.get("/alarms");
-      setAlarms(res.data.data);
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setAlarms(list);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch alarms", err);
+      setAlarms([]);
     }
   };
 
   const [analytics, setAnalytics] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
 
-useEffect(() => {
-  const fetchAnalytics = async () => {
-    try {
-      const res = await apiClient.get("/performance/analytics");
-      setAnalytics(res.data.data);
-    } catch (err) {
-      console.error("Failed to fetch analytics", err);
-    }
-  };
-  fetchAnalytics();
-  fetchAlarms();
-}, []);
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await apiClient.get("/habits/analytics");
+        setAnalytics(res.data?.data || res.data);
+      } catch (err) {
+        // Fallback or optional analytics
+        try {
+          const res = await apiClient.get("/performance/analytics");
+          setAnalytics(res.data?.data || res.data);
+        } catch {
+          // Analytics is non-critical for alarms view
+        }
+      }
+    };
+    fetchAnalytics();
+    fetchAlarms();
+  }, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -131,13 +139,17 @@ useEffect(() => {
         title: alarmForm.title,
         alarm_time: alarmForm.alarm_time,
         days_of_week: alarmForm.days_of_week.join(","),
+        repeat_days: alarmForm.days_of_week.join(","),
         challenge_category: alarmForm.challenge_category,
+        challenge_type: alarmForm.challenge_category,
         difficulty_override: alarmForm.difficulty_override,
+        difficulty: alarmForm.difficulty_override === "default" ? "medium" : alarmForm.difficulty_override,
         snooze_limit: alarmForm.snooze_limit,
       };
 
-      if (editingAlarm) {
-        await apiClient.put(`/alarms/${editingAlarm.id}`, payload);
+      const editingId = editingAlarm?.id || editingAlarm?.alarm_id;
+      if (editingId) {
+        await apiClient.put(`/alarms/${editingId}`, payload);
       } else {
         await apiClient.post("/alarms", payload);
       }
@@ -164,7 +176,15 @@ useEffect(() => {
   };
 
   const toggleAlarm = async (id) => {
-    await apiClient.put(`/alarms/${id}/toggle`);
+    try {
+      await apiClient.put(`/alarms/${id}/toggle`);
+    } catch {
+      // If toggle endpoint is different or put update
+      const target = (alarms || []).find((a) => (a.id || a.alarm_id) === id);
+      if (target) {
+        await apiClient.put(`/alarms/${id}`, { is_active: !target.is_active });
+      }
+    }
     fetchAlarms();
   };
 
@@ -177,13 +197,14 @@ useEffect(() => {
     return { time: `${h12.toString().padStart(2, "0")}:${m}`, ampm };
   };
 
-  const filteredAlarms = alarms.filter((alarm) => {
+  const alarmList = Array.isArray(alarms) ? alarms : [];
+  const filteredAlarms = alarmList.filter((alarm) => {
     switch (activeFilter) {
       case "active":
         return alarm.is_active;
 
       case "snoozed":
-        return alarm.snooze_limit > 0;
+        return (alarm.snooze_limit || alarm.snooze_duration || 0) > 0;
 
       case "label":
         return alarm.title?.trim()?.length > 0;
@@ -274,22 +295,24 @@ useEffect(() => {
       {/* Alarms Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredAlarms.map((alarm) => {
-          const Icon = getCategoryIcon(alarm.challenge_category);
-          const colorClass = getCategoryColor(alarm.challenge_category);
+          const alarmId = alarm.id || alarm.alarm_id;
+          const category = alarm.challenge_category || alarm.challenge_type || "math";
+          const Icon = getCategoryIcon(category);
+          const colorClass = getCategoryColor(category);
           const { time, ampm } = parseTime(alarm.alarm_time);
-          const activeDays = alarm.days_of_week
-            ? alarm.days_of_week.split(",")
+          const activeDays = (alarm.days_of_week || alarm.repeat_days || "")
+            ? (alarm.days_of_week || alarm.repeat_days).split(",")
             : [];
 
           return (
             <div
-              key={alarm.id}
+              key={alarmId}
               className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm relative group transition-all"
             >
               {/* Toggle switch */}
               <div className="absolute top-6 right-6">
                 <button
-                  onClick={() => toggleAlarm(alarm.id)}
+                  onClick={() => toggleAlarm(alarmId)}
                   className={`w-12 h-6 rounded-full flex items-center transition-colors px-1 cursor-pointer ${alarm.is_active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"}`}
                 >
                   <div
@@ -338,7 +361,7 @@ useEffect(() => {
                 <div
                   className={`flex items-center gap-2 text-sm font-bold capitalize ${colorClass}`}
                 >
-                  <Icon /> {alarm.challenge_category} Challenge
+                  <Icon /> {category} Challenge
                 </div>
 
                 {/* Edit and Delete buttons (visible on hover) */}
@@ -352,7 +375,7 @@ useEffect(() => {
                   <button
                     onClick={() => {
                       if (window.confirm("Delete this alarm?"))
-                        deleteAlarm(alarm.id);
+                        deleteAlarm(alarmId);
                     }}
                     className="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 font-bold cursor-pointer"
                   >

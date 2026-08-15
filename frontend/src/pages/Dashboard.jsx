@@ -74,16 +74,42 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [alarmsRes, historyRes, invitesRes, adviceRes] = await Promise.all([
+      const results = await Promise.allSettled([
         apiClient.get("/alarms"),
-        apiClient.get("/performance/history?limit=10"),
-        apiClient.get("/coach/invites/pending"),
-        apiClient.get("/coach/advice/my-advice")
+        apiClient.get("/habits/history?limit=10"),
+        apiClient.get("/coach/notifications"),
+        apiClient.get("/habits/analytics")
       ]);
-      setAlarms(alarmsRes.data.data);
-      setHistory(historyRes.data.data || []);
-      setPendingInvites(invitesRes.data.data || []);
-      setCoachAdvice(adviceRes.data.data || []);
+
+      const [alarmsRes, historyRes, invitesRes, adviceRes] = results;
+
+      if (alarmsRes.status === "fulfilled") {
+        const val = alarmsRes.value?.data;
+        setAlarms(Array.isArray(val) ? val : (val?.data || []));
+      } else {
+        setAlarms([]);
+      }
+
+      if (historyRes.status === "fulfilled") {
+        const val = historyRes.value?.data;
+        setHistory(Array.isArray(val) ? val : (val?.data || []));
+      } else {
+        setHistory([]);
+      }
+
+      if (invitesRes.status === "fulfilled") {
+        const val = invitesRes.value?.data;
+        setPendingInvites(Array.isArray(val) ? val : (val?.notifications || val?.data || []));
+      } else {
+        setPendingInvites([]);
+      }
+
+      if (adviceRes.status === "fulfilled") {
+        const val = adviceRes.value?.data;
+        setCoachAdvice(Array.isArray(val) ? val : (val?.data || []));
+      } else {
+        setCoachAdvice([]);
+      }
     } catch (err) {
       console.error("Failed to fetch dashboard data", err);
     }
