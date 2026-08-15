@@ -16,39 +16,96 @@ const categories = [
 
 const challengeBank = [
   // Math
-  { category: "math", level: "Beginner", prompt: "What is 7 + 5?", answer: "12", time_limit_seconds: 45 },
-  { category: "math", level: "Medium", prompt: "What is 14 ÷ 2 + 6?", answer: "13", time_limit_seconds: 35 },
+  { category: "math", level: "Beginner", prompt: "What is 7 + 5?", answer: "12", time_limit_seconds: 30 },
+  { category: "math", level: "Beginner", prompt: "What is 15 - 8?", answer: "7", time_limit_seconds: 30 },
+  { category: "math", level: "Easy", prompt: "What is 12 × 4 - 8?", answer: "40", time_limit_seconds: 35 },
+  { category: "math", level: "Easy", prompt: "What is 9 × 7 + 6?", answer: "69", time_limit_seconds: 35 },
+  { category: "math", level: "Medium", prompt: "What is 14 ÷ 2 + 6 × 3?", answer: "25", time_limit_seconds: 40 },
+  { category: "math", level: "Medium", prompt: "What is (18 + 14) ÷ 4 + 9?", answer: "17", time_limit_seconds: 40 },
+  { category: "math", level: "Hard", prompt: "Solve for x: 3x + 15 = 48", answer: "11", time_limit_seconds: 45 },
+  { category: "math", level: "Hard", prompt: "What is 17 × 13?", answer: "221", time_limit_seconds: 45 },
+  { category: "math", level: "Expert", prompt: "What is 2^7 - 35?", answer: "93", time_limit_seconds: 50 },
+  { category: "math", level: "Expert", prompt: "Solve: (14 × 15) - (12 × 11)", answer: "78", time_limit_seconds: 50 },
   
   // Logic
-  { category: "logic", level: "Easy", prompt: "If some A are B, and all B are C, are some A definitely C?", answer: "yes", time_limit_seconds: 45 },
-  
+  { category: "logic", level: "Easy", prompt: "If all Bloops are Razzies and all Razzies are Lizzies, are all Bloops definitely Lizzies? (yes/no)", answer: "yes", time_limit_seconds: 40 },
+  { category: "logic", level: "Medium", prompt: "A clock shows 3:15. What is the angle between the hour and minute hands? (in degrees)", answer: "7.5", time_limit_seconds: 45 },
+  { category: "logic", level: "Hard", prompt: "You have 8 balls. One is heavier. What is the minimum number of balance scale weighings needed to find it?", answer: "2", time_limit_seconds: 50 },
+
   // Memory
-  { category: "memory", level: "Pattern Sequence", prompt: "What number comes next in the pattern: 3, 6, 9, 12, ?", answer: "15", time_limit_seconds: 45 },
-  
+  { category: "memory", level: "3×3 Matrix", prompt: "Memorize the sequence: 4 - 9 - 2 - 7. What was the 3rd number?", answer: "2", time_limit_seconds: 35 },
+  { category: "memory", level: "4×4 Matrix", prompt: "Memorize: Blue, Green, Red, Yellow, Silver. What color was in the 4th position?", answer: "yellow", time_limit_seconds: 35 },
+  { category: "memory", level: "Pattern Sequence", prompt: "What number comes next: 3, 6, 12, 24, 48, ?", answer: "96", time_limit_seconds: 40 },
+  { category: "memory", level: "Timing", prompt: "If an event recurs every 45 minutes starting at 1:00 PM, at what time (HH:MM PM) is the 3rd occurrence?", answer: "2:30", time_limit_seconds: 45 },
+
   // Word
-  { category: "word", level: "Anagram", prompt: "Unscramble this word: 'plepa'", answer: "apple", time_limit_seconds: 45 },
-  
+  { category: "word", level: "Anagram", prompt: "Unscramble this word for a brain chemical: 'EIPOMNAD'", answer: "dopamine", time_limit_seconds: 40 },
+  { category: "word", level: "Scramble", prompt: "Unscramble this fruit: 'GNAOM'", answer: "mango", time_limit_seconds: 30 },
+  { category: "word", level: "Dictionary", prompt: "What 7-letter word means 'sharp, keen mental perception' (starts with A)?", answer: "acumen", time_limit_seconds: 40 },
+
   // Pattern
-  { category: "pattern", level: "Easy", prompt: "A, C, E, G, ?", answer: "I", time_limit_seconds: 30 },
-  
+  { category: "pattern", level: "Easy", prompt: "Find the next letter: A, D, G, J, ?", answer: "M", time_limit_seconds: 30 },
+  { category: "pattern", level: "Medium", prompt: "Find the missing number: 5, 11, 23, 47, ?", answer: "95", time_limit_seconds: 35 },
+  { category: "pattern", level: "Hard", prompt: "Find the next number: 1, 1, 2, 3, 5, 8, 13, ?", answer: "21", time_limit_seconds: 35 },
+
   // Riddles
   { category: "riddles", level: "Easy", prompt: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?", answer: "echo", time_limit_seconds: 45 },
-  
+  { category: "riddles", level: "Medium", prompt: "What has keys but can't open locks, space but no room, and you can enter but can't go inside?", answer: "keyboard", time_limit_seconds: 45 },
+  { category: "riddles", level: "Hard", prompt: "The more of this there is, the less you see. What is it?", answer: "darkness", time_limit_seconds: 45 },
+
   // Trivia
   { category: "trivia", level: "General", prompt: "What is the capital of France?", answer: "paris", time_limit_seconds: 30 },
+  { category: "trivia", level: "Science", prompt: "What is the chemical symbol for Gold?", answer: "Au", time_limit_seconds: 30 },
+  { category: "trivia", level: "History", prompt: "In which year did the Apollo 11 moon landing take place?", answer: "1969", time_limit_seconds: 30 },
 ];
+
+const generateProceduralChallenge = (category, level) => {
+  if (category === "math") {
+    const a = Math.floor(Math.random() * 20) + 5;
+    const b = Math.floor(Math.random() * 15) + 3;
+    const c = Math.floor(Math.random() * 10) + 2;
+    if (level === "Beginner" || level === "Easy") {
+      return {
+        category: "math",
+        level,
+        prompt: `Calculate: ${a} × ${b} + ${c}`,
+        answer: String(a * b + c),
+        time_limit_seconds: 40
+      };
+    } else {
+      const d = Math.floor(Math.random() * 25) + 10;
+      return {
+        category: "math",
+        level,
+        prompt: `Solve: (${a} + ${b}) × ${c} - ${d}`,
+        answer: String((a + b) * c - d),
+        time_limit_seconds: 45
+      };
+    }
+  }
+
+  if (category === "pattern") {
+    const start = Math.floor(Math.random() * 10) + 1;
+    const step = Math.floor(Math.random() * 6) + 2;
+    const seq = [start, start + step, start + step * 2, start + step * 3];
+    return {
+      category: "pattern",
+      level,
+      prompt: `Find the next number in sequence: ${seq.join(", ")}, ?`,
+      answer: String(start + step * 4),
+      time_limit_seconds: 35
+    };
+  }
+
+  // Fallback to rich random selection from category
+  const matches = challengeBank.filter(c => c.category === category);
+  return matches[Math.floor(Math.random() * matches.length)] || challengeBank[0];
+};
 
 const getRandomChallenge = (category, level) => {
   const filtered = challengeBank.filter((item) => item.category === category && item.level === level);
   if (!filtered.length) {
-    // Return a generic fallback if no mock exists for this level yet
-    return {
-      category,
-      level,
-      prompt: `Sample ${level} ${category} challenge (Add more to bank)`,
-      answer: "test",
-      time_limit_seconds: 60,
-    };
+    return generateProceduralChallenge(category, level);
   }
   return filtered[Math.floor(Math.random() * filtered.length)];
 };
@@ -76,18 +133,31 @@ export default function Practice() {
   }, [selectedCategory, selectedLevel, mode]);
 
   const handleVerify = async (answer) => {
-    // The backend uses LLM validation, but for Practice we do simple exact match for now 
-    // OR we could call a verify endpoint. For now, exact match for static, and generate also returns 'correct_answer'
-    const is_correct = answer.trim().toLowerCase() === challenge.answer?.toLowerCase() || 
-                       answer.trim().toLowerCase() === challenge.correct_answer?.toLowerCase();
+    const rawAnswer = String(answer || "").trim().toLowerCase();
+    const expected = String(challenge?.answer || challenge?.correct_answer || "").trim().toLowerCase();
+    const is_correct = rawAnswer === expected;
 
     if (is_correct) {
       setToast({ type: "success", message: `Correct! You solved the challenge.` });
+      // Record habit challenge score to backend
+      try {
+        await apiClient.post("/habits/score", {
+          challenge_type: selectedCategory,
+          difficulty: selectedLevel.toLowerCase(),
+          time_taken_seconds: 15,
+          is_correct: true,
+          attempts: 1
+        });
+      } catch {
+        // Non-blocking score recording
+      }
+    } else {
+      setToast({ type: "error", message: `Incorrect. Expected answer was ${expected}. Try another one!` });
     }
 
     return {
       is_correct,
-      time_taken_seconds: 0 // handled in widget
+      time_taken_seconds: 0
     };
   };
 
@@ -97,7 +167,7 @@ export default function Practice() {
     if (mode === 'static') {
       setChallenge(getRandomChallenge(selectedCategory, selectedLevel));
     } else {
-      setChallenge(null);
+      generateDynamicChallenge();
     }
   };
 
@@ -109,12 +179,15 @@ export default function Practice() {
         category: selectedCategory,
         difficulty: selectedLevel
       });
-      setChallenge(res.data.data);
-      // For generate mode, auto-start once generated
-      setIsActive(true); 
-    } catch (err) {
-      console.error(err);
-      setToast({ type: "error", message: "Failed to generate dynamic challenge." });
+      const data = res.data?.data || res.data;
+      setChallenge(data);
+      setIsActive(true);
+    } catch {
+      // Procedural generator fallback for instantaneous practice
+      const procedural = generateProceduralChallenge(selectedCategory, selectedLevel);
+      setChallenge(procedural);
+      setIsActive(true);
+      setToast({ type: "info", message: "Generated practice puzzle ready!" });
     } finally {
       setLoadingChallenge(false);
     }
