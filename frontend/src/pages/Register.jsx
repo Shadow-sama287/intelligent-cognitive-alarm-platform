@@ -10,7 +10,6 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +28,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await register(form.username, form.email, form.password, form.role);
+      await register(form.username, form.email, form.password);
       navigate("/login", { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || err.message);
@@ -98,30 +97,6 @@ export default function Register() {
               onChange={handleChange}
               required
             />
-          </div>
-
-          <div className="mb-4">
-            <label className="text-xs font-bold text-slate-400 block mb-1.5 uppercase">Account Role</label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { id: "user", label: "User" },
-                { id: "coach", label: "Coach" },
-                { id: "admin", label: "Admin" },
-              ].map((r) => (
-                <button
-                  type="button"
-                  key={r.id}
-                  onClick={() => setForm({ ...form, role: r.id })}
-                  className={`py-2 text-xs font-bold rounded-lg border transition-all ${
-                    form.role === r.id
-                      ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
-                      : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
           </div>
 
           <button type="submit" className="btn-gradient btn-block" disabled={loading}>
