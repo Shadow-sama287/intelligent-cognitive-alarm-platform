@@ -27,20 +27,15 @@ services:
         sync: false   # Set manually from MongoDB Atlas
       - key: GEMINI_API_KEY
         sync: false   # Set manually
-    secretFiles:
-      - name: firebase-credentials.json
-        mountPath: /etc/secrets/firebase-credentials.json
-    buildFilter:
-      paths:
-        - backend/**
     preDeployCommand: alembic upgrade head
+
+  - type: redis
+    name: icap-redis
+    plan: free
+    region: oregon
+    ipAllowList: []
 
 databases:
   - name: icap-postgres
-    plan: free
-    region: oregon
-
-  - name: icap-redis
-    type: redis
     plan: free
     region: oregon
