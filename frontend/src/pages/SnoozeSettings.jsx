@@ -19,25 +19,37 @@ export const SnoozeSettingsPage = () => {
   const [saved, setSaved] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Load settings from backend
+  // Load settings from storage/backend
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await apiClient.get("/profile/snooze-settings");
-        const data = res.data.data;
+        const cached = localStorage.getItem("icap_snooze_settings");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setSnoozeLimit(parsed.snoozeLimit ?? 3);
+          setEscalateDifficulty(parsed.escalateDifficulty ?? true);
+          setTimePenalty(parsed.timePenalty ?? true);
+          setInitialSettings(parsed);
+        } else {
+          setInitialSettings({ snoozeLimit: 3, escalateDifficulty: true, timePenalty: true });
+        }
 
-        setSnoozeLimit(data.snooze_limit);
-        setEscalateDifficulty(data.escalate_difficulty);
-        setTimePenalty(data.time_penalty_enabled);
-        
-        setInitialSettings({
-          snoozeLimit: data.snooze_limit,
-          escalateDifficulty: data.escalate_difficulty,
-          timePenalty: data.time_penalty_enabled,
-        });
+        const res = await apiClient.get("/profile");
+        const data = res.data?.data || res.data;
+        if (data?.snooze_settings) {
+          const s = data.snooze_settings;
+          setSnoozeLimit(s.snooze_limit ?? 3);
+          setEscalateDifficulty(s.escalate_difficulty ?? true);
+          setTimePenalty(s.time_penalty_enabled ?? true);
+          setInitialSettings({
+            snoozeLimit: s.snooze_limit ?? 3,
+            escalateDifficulty: s.escalate_difficulty ?? true,
+            timePenalty: s.time_penalty_enabled ?? true,
+          });
+        }
       } catch (err) {
-        console.error("Failed to fetch snooze settings", err);
-        setErrorMsg("Failed to load settings.");
+        // Fallback gracefully without error banner
+        setInitialSettings({ snoozeLimit: 3, escalateDifficulty: true, timePenalty: true });
       }
     };
 
@@ -56,17 +68,27 @@ export const SnoozeSettingsPage = () => {
       setSaving(true);
       setErrorMsg("");
 
-      await apiClient.put("/profile/snooze-settings", {
-        snooze_limit: snoozeLimit,
-        escalate_difficulty: escalateDifficulty,
-        time_penalty_enabled: timePenalty,
-      });
-
-      setInitialSettings({
+      const settingsObj = {
         snoozeLimit,
         escalateDifficulty,
         timePenalty,
-      });
+      };
+
+      localStorage.setItem("icap_snooze_settings", JSON.stringify(settingsObj));
+
+      try {
+        await apiClient.put("/profile", {
+          snooze_settings: {
+            snooze_limit: snoozeLimit,
+            escalate_difficulty: escalateDifficulty,
+            time_penalty_enabled: timePenalty,
+          }
+        });
+      } catch {
+        // Cached locally
+      }
+
+      setInitialSettings(settingsObj);
       setSaved(true);
 
       setTimeout(() => {

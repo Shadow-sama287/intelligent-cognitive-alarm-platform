@@ -47,14 +47,14 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  register: async (username, email, password) => {
+  register: async (username, email, password, role = 'user') => {
     // Map username to full_name and send confirm_password as required by RegisterRequest schema
     await apiClient.post('/auth/register', {
       email,
       password,
       confirm_password: password,
       full_name: username,
-      role: 'user'
+      role: role.toLowerCase()
     });
   },
 

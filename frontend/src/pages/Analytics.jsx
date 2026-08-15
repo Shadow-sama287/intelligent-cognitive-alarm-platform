@@ -13,39 +13,42 @@ export const AnalyticsPage = () => {
   const [exportPdfLoading, setExportPdfLoading] = useState(false);
   const [exportExcelLoading, setExportExcelLoading] = useState(false);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     setExportPdfLoading(true);
     try {
-      const response = await apiClient.get('/reports/export/pdf', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `sleep_summary_report.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      window.print();
     } catch (err) {
       console.error('PDF export failed', err);
-      alert('Failed to export PDF report.');
     } finally {
       setExportPdfLoading(false);
     }
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = () => {
     setExportExcelLoading(true);
     try {
-      const response = await apiClient.get('/reports/export/excel', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `sleep_habit_report.xlsx`);
+      const rows = [
+        ["Date", "Day", "Habit Score (pts)", "Avg Solve Time (s)", "Snoozes"],
+        ...(trends.length > 0 ? trends : displayData).map((t) => [
+          t.date || "N/A",
+          t.day || "N/A",
+          t.score || 0,
+          t.avg_solve_time || 0,
+          t.snoozes || 0
+        ])
+      ];
+
+      const csvContent = "data:text/csv;charset=utf-8," + rows.map((e) => e.join(",")).join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `habit_score_analytics_${timeframeDays}d.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
     } catch (err) {
       console.error('Excel export failed', err);
-      alert('Failed to export Excel report.');
+      alert('Failed to generate export file.');
     } finally {
       setExportExcelLoading(false);
     }
