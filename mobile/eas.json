@@ -17,7 +17,7 @@
       "distribution": "internal",
       "env": {
         "EXPO_DOCTOR_ENABLE": "0",
-        "EXPO_PUBLIC_API_URL": "https://icap-backend.onrender.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://icap-backend.onrender.com"
       },
       "android": {
         "buildType": "apk"
@@ -25,7 +25,7 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://icap-backend.onrender.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://icap-backend.onrender.com"
       }
     }
   }
